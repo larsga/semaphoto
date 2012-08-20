@@ -1,0 +1,16 @@
+$def with (letters)
+
+<p>
+$for (letter, people) in letters:
+    <a href="#$letter">$letter</a> |
+</p>
+
+<table>
+$for (letter, people) in letters:
+    <tr><td colspan=2><p><h2><a name="$letter">$letter</a></h2>
+
+    $for (name, id, count) in people:
+          <tr><td><a href="person.jsp?id=$id"
+              >$name</a>&nbsp;&nbsp;&nbsp; <td>$count
+  
+</table>

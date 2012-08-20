@@ -1,0 +1,32 @@
+$def with (name, conf, pager, topic_id)
+
+$def paging():
+    $if pager.get_page_count() > 1:
+         <p>
+         $if pager.get_page_no() > 1:
+             <<
+           
+         $for pno in range(1, pager.get_page_count() + 1):
+             $if pager.get_page_no() == pno:
+                 <b>$pno</b>
+             $else:
+                 <a href="?id=$topic_id&n=$pno">$pno</a>
+
+         $if pager.get_page_no() < pager.get_page_count():
+             >>
+         </p>
+                 
+<h1>$name</h1>
+
+$:paging()
+
+<table>
+$for (id, title, time) in pager.get_photos():
+    <tr><td><a href="photo.jsp?id=$id"
+              ><img src="$conf.get_photo_uri()$id;thumb"></a>
+        <td style="font-size: 75%">$title<br>
+            $time
+  
+</table>
+
+$:paging()

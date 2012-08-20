@@ -1,0 +1,62 @@
+
+body {
+  background-color: white;
+  color: black;
+  font-family: Arial;
+  margin-top: 48pt;
+  margin-bottom: 48pt;
+  margin-left: 10%;
+  margin-right: 10%;
+}
+
+a:link {
+  color: black;
+}
+a:visited {
+  color: darkgray;
+}
+
+td {
+  vertical-align: top;
+}
+
+th {
+  text-align: left;
+}
+
+img.frame {
+  border: solid 2pt black;
+}
+
+td.linkbar {
+  font-size: 75%;
+}
+
+table.filterbox {
+  border: solid 1pt black;
+}
+
+th {
+  padding-right: 6pt;
+}
+
+tr.unprocessed td {
+  font-style: italic;
+  color: #888;
+}
+
+tr.unprocessed td a:link {
+  color: #888;
+}
+
+tr.unprocessed td a:visited {
+  color: #AAA;
+}
+
+.hidden {
+  display: none;
+}
+
+.visible {
+  display: block;
+}

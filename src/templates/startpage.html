@@ -1,0 +1,20 @@
+$def with (counts, label, id, time, place, event, conf)
+
+<p>You can access the photos through lists of:</p>
+
+<div style="float: right">
+  $label<br>
+  <a href="photo.jsp?id=$id"><img src="$conf.get_photo_uri()$id;thumb"></a>
+  <div style="font-size: 75%">
+    <br>$time<br>
+    $if place:
+      <a href="place.jsp?id=$place[0]">$place[1]</a><br>
+    $if event:
+      <a href="event.jsp?id=$event[0]">$event[1]</a>
+  </div>
+</div>
+
+<table>
+$for (type, count, link) in counts:
+    <tr><td><a href="$link">$type</a> <td>$count
+</table>

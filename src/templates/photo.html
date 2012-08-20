@@ -1,0 +1,31 @@
+$def with (id, title, time, event_id, event_name, place_id, place_name, desc, cats, people, prev, next, conf)
+
+<h1>$title</h1>
+
+$if prev:
+    <a href="photo.jsp?id=$prev"><img src="static/nav_prev.gif"></a>
+$if next:
+    <a href="photo.jsp?id=$next"><img src="static/nav_next.gif"></a>
+
+$if place_id:
+    <a href="place.jsp?id=$place_id">$place_name</a>
+$if event_id:
+    <a href="event.jsp?id=$event_id">$event_name</a>
+$time
+
+<p><img src="$conf.get_photo_uri()$id">
+
+$if desc:
+    <p>$desc
+
+$if cats:
+    <ul>
+    $for (cat_id, cat_name) in cats:
+        <li><a href="category.jsp?id=$cat_id">$cat_name</a>
+    </ul>
+
+$if people:
+    <ul>
+    $for (person_id, person_name) in people:
+        <li><a href="person.jsp?id=$person_id">$person_name</a>
+    </ul>

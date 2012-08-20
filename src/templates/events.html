@@ -1,0 +1,18 @@
+$def with (years)
+
+<p>
+$for (year, events) in years:
+    <a href="#$year">$year</a> |
+</p>
+
+<table>
+$for (year, events) in years:
+    <tr><td colspan=4><p><h2><a name="$year">$year</a></h2>
+
+    $for (name, id, start, end, count) in events:
+          <tr><td><a href="event.jsp?id=$id">$name</a> &nbsp;&nbsp;&nbsp;
+              <td>$start &nbsp;&nbsp;&nbsp;
+              <td>$end &nbsp;&nbsp;&nbsp;
+              <td>$count &nbsp;&nbsp;&nbsp;
+  
+</table>

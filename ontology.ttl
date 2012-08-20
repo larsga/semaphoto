@@ -1,0 +1,131 @@
+
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix dbo: <http://dbpedia.org/ontology/> .
+
+@prefix sp: <http://psi.garshol.priv.no/semaphoto/ont/> .
+
+# ----- METADATA
+
+<http://psi.garshol.priv.no/semaphoto/ont/> a owl:Ontology;
+  rdfs:label "Semaphoto ontology".
+  #owl:imports <http://xmlns.com/foaf/0.1/>.
+
+# ----- GROUNDINGS
+
+dbo:Place a owl:Class.
+foaf:Image a owl:Class.
+foaf:Person a owl:Class.
+foaf:depiction a owl:ObjectProperty.
+
+# ----- PHOTO
+
+sp:Image a owl:Class;
+  rdfs:subClassOf foaf:Image;
+  rdfs:label "Image" .
+
+sp:Photo a owl:Class;
+  rdfs:subClassOf sp:Image;
+  rdfs:label "Photo"; 
+  owl:disjointWith sp:Video. # can't both be a video and a still photo
+
+sp:Video a owl:Class;
+  rdfs:subClassOf sp:Image;
+  rdfs:label "Video" .
+
+sp:time-taken a owl:DatatypeProperty;
+  rdfs:label "Time taken";
+  rdfs:domain sp:Image;
+  rdfs:range rdfs:Literal. # this is required, must express that
+
+sp:duration a owl:DatatypeProperty;
+  rdfs:label "Duration";
+  rdfs:domain sp:Video;
+  rdfs:range rdfs:Literal. # this is required, must express that
+
+sp:description a owl:DatatypeProperty;
+  rdfs:label "Description";
+  rdfs:domain sp:Image;
+  rdfs:range rdfs:Literal.
+
+# ----- PLACE
+
+sp:Place a owl:Class;
+  rdfs:subClassOf dbo:Place;
+  rdfs:label "Place";
+  owl:disjointWith sp:Image .
+
+sp:name a owl:DatatypeProperty;
+  rdfs:label "Name";
+  # doman is: place, person, event, category
+  rdfs:range rdfs:Literal.
+
+sp:taken-at a owl:ObjectProperty;
+  rdfs:label "Taken at";
+  rdfs:domain sp:Image;
+  rdfs:range sp:Place.
+
+sp:contained-in a owl:TransitiveProperty;
+  rdfs:label "Contained in";
+  rdfs:domain sp:Place;
+  rdfs:range sp:Place.
+
+# ----- PERSON
+
+sp:Person a owl:Class;
+  rdfs:subClassOf foaf:Person;
+  rdfs:label "Person";
+  owl:disjointWith sp:Image;
+  owl:disjointWith sp:Place.
+
+sp:depicts a owl:ObjectProperty;
+  rdfs:label "Depicts";
+  rdfs:domain sp:Image;
+  rdfs:range sp:Person. # we prefer this direction
+
+sp:depicted-in a owl:ObjectProperty;
+  rdfs:label "Depicted in";
+  rdfs:domain sp:Person;
+  rdfs:range sp:Image;
+  owl:inverseOf sp:depicts;
+  rdfs:subPropertyOf foaf:depiction.
+
+# ----- EVENT
+
+sp:Event a owl:Class;
+  rdfs:label "Event";
+  owl:disjointWith sp:Image;
+  owl:disjointWith sp:Place;
+  owl:disjointWith sp:Person.
+
+sp:taken-during a owl:ObjectProperty;
+  rdfs:label "Taken during";
+  rdfs:domain sp:Image;
+  rdfs:range sp:Event.
+
+sp:start-date a owl:DatatypeProperty;
+  rdfs:label "Start date";
+  rdfs:domain sp:Event;
+  rdfs:range rdfs:Literal. # xsd:dateTime
+
+sp:end-date a owl:DatatypeProperty;
+  rdfs:label "End date";
+  rdfs:domain sp:Event;
+  rdfs:range rdfs:Literal. # xsd:dateTime
+
+# ----- CATEGORY
+
+sp:Category a owl:Class;
+  rdfs:label "Category";
+  owl:disjointWith sp:Image;
+  owl:disjointWith sp:Place;
+  owl:disjointWith sp:Person;
+  owl:disjointWith sp:Event.
+
+sp:in-category a owl:ObjectProperty;
+  rdfs:label "In category";
+  rdfs:domain sp:Image;
+  rdfs:range sp:Category.
