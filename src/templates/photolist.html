@@ -4,7 +4,8 @@ $def paging():
     $if pager.get_page_count() > 1:
          <p>
          $if pager.get_page_no() > 1:
-             <<
+             <a href="?id=$topic_id&n=$pager.get_page_no(-1)"
+               ><img src="/static/nav_prev.gif" alt="prev"></a>
            
          $for pno in range(1, pager.get_page_count() + 1):
              $if pager.get_page_no() == pno:
@@ -13,7 +14,8 @@ $def paging():
                  <a href="?id=$topic_id&n=$pno">$pno</a>
 
          $if pager.get_page_no() < pager.get_page_count():
-             >>
+             <a href="?id=$topic_id&n=$pager.get_page_no(1)"
+               ><img src="/static/nav_next.gif" alt="next"></a>
          </p>
                  
 <h1>$name</h1>

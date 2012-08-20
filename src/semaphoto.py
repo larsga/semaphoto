@@ -6,7 +6,6 @@ import sparql
 # TODO
 #  - install Virtuoso on Linux  
 #
-#  - paging in "person" template
 #  - EXIF info window
 #  - privacy filtering
 #  - places
@@ -212,23 +211,10 @@ class EventsPage:
 class EventPage:
     def GET(self):
         event_id = web.input()["id"]
-        
         name = q_get('select ?name where { ?s sp:id "%s"; sp:name ?name }' %
                      event_id)
-
-        query = """
-          select ?id, ?title, ?time
-          where { 
-            ?i sp:taken-during ?e;
-              sp:id ?id;
-              dc:title ?title;
-              sp:time-taken ?time.
-            ?e sp:id "%s".
-          } order by desc(?time) limit 50
-        """ % event_id
-        
-        photos = q(query)
-        return render.photolist(name, photos, conf)
+        f = '?i sp:taken-during ?e. ?e sp:id "%s". ' % event_id
+        return render.photolist(name, conf, ListPager(f, "asc"), event_id)
 
 class CategoriesPage:
     def GET(self):
@@ -242,24 +228,11 @@ class CategoriesPage:
 
 class CategoryPage:
     def GET(self):
-        event_id = web.input()["id"]
-        
+        cat_id = web.input()["id"]
         name = q_get('select ?name where { ?s sp:id "%s"; sp:name ?name }' %
-                     event_id)
-
-        query = """
-          select ?id, ?title, ?time
-          where { 
-            ?i sp:in-category ?c;
-              sp:id ?id;
-              dc:title ?title;
-              sp:time-taken ?time.
-            ?c sp:id "%s".
-          } order by desc(?time) limit 50
-        """ % event_id
-        
-        photos = q(query)
-        return render.photolist(name, photos, conf)
+                     cat_id)
+        f = '?i sp:in-category ?c. ?c sp:id "%s". ' % cat_id
+        return render.photolist(name, conf, ListPager(f), cat_id)
 
 class PlacesPage:
     def GET(self):
@@ -270,36 +243,25 @@ class PlacePage:
         place_id = web.input()["id"]
         name = q_get('select ?name where { ?s sp:id "%s"; sp:name ?name }' %
                      place_id)
-
-        query = """
-          select ?id, ?title, ?time
-          where { 
-            ?i sp:taken-at ?p;
-              sp:id ?id;
-              dc:title ?title;
-              sp:time-taken ?time.
-            ?p sp:id "%s".
-          } order by desc(?time) limit 50
-        """ % place_id
-        
-        photos = q(query)
-        return render.photolist(name, photos, conf)
+        f = '?i sp:taken-at ?p. ?p sp:id "%s". ' % place_id
+        return render.photolist(name, conf, ListPager(f), place_id)
 
 # --- MODEL
 
 class ListPager:
 
-    def __init__(self, fragment):
+    def __init__(self, fragment, sortdir = "desc"):
         self._fragment = fragment
         self._page_no = int(web.input().get("n", 1))
         count = q_get('select count(?i) where { %s } ' % self._fragment)
         self._count = int(count.value)
+        self._sortdir = sortdir
 
     def get_page_count(self):
         return self._count / 50 + 1
 
-    def get_page_no(self):
-        return self._page_no
+    def get_page_no(self, offset = 0):
+        return self._page_no + offset
 
     def get_photos(self):
         offset = (self._page_no - 1) * 50
@@ -310,8 +272,8 @@ class ListPager:
               dc:title ?title;
               sp:time-taken ?time.
             %s
-          } order by desc(?time) offset %s limit 50
-        """ % (self._fragment, offset)
+          } order by %s(?time) offset %s limit 50
+        """ % (self._fragment, self._sortdir, offset)
         return q(query)
         
 class Configuration:
