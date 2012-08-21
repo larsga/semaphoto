@@ -7,7 +7,6 @@ import sparql
 #  - install Virtuoso on Linux  
 #
 #  - places
-#    - sort the tree
 #    - apply +/- javascript etc
 #  - years and months
 #  - map
@@ -255,6 +254,7 @@ class PlacesPage:
         tree = TreeModel()
         for (parent, place, label, id) in q(query):
             tree.add_node(parent and str(parent), str(place), label.value, id.value)
+        tree.sort()
         
         # 3. render
         return render.places(tree)
@@ -304,6 +304,11 @@ class TreeModel:
             if pnode:
                 self._roots.remove(node)
 
+    def sort(self):
+        self._roots.sort()
+        for node in self._roots:
+            node.sort()
+                
 class TreeNode:
 
     def __init__(self, parent, uri, label = None, id = None):
@@ -332,6 +337,17 @@ class TreeNode:
 
     def get_uri(self):
         return self._uri
+
+    def sort(self):
+        self._children.sort()
+        for node in self._children:
+            node.sort()
+
+    def __cmp__(self, other):
+        if not isinstance(other, TreeNode):
+            return -1
+
+        return cmp(self._label, other.get_label())
             
 class ListPager:
 
