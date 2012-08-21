@@ -9,14 +9,25 @@ $if next:
 
 $if place_id:
     <a href="place.jsp?id=$place_id">$place_name</a>
+    $if event_id:
+        &mdash;
 $if event_id:
     <a href="event.jsp?id=$event_id">$event_name</a>
-$time
+&mdash; $time
 
-<p><img src="$conf.get_photo_uri()$id">
+<script>
+  function openInfo(photoid) {
+    window.open("$conf.get_photo_uri()$id;metadata",
+      "infoWindow","menubar=0,resizable=0,width=450,height=500,scrollbars=1");
+  }
+</script>
+
+<a href="javascript:openInfo('$id')"><img src="static/info.gif" border=0></a>
+    
+<p><img src="$conf.get_photo_uri()$id"></p>
 
 $if desc:
-    <p>$desc
+    <p>$desc</p>
 
 $if cats:
     <ul>

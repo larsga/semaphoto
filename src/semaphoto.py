@@ -6,7 +6,6 @@ import sparql
 # TODO
 #  - install Virtuoso on Linux  
 #
-#  - EXIF info window
 #  - privacy filtering
 #  - places
 #  - years and months
