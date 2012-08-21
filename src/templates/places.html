@@ -1,0 +1,15 @@
+$def with (tree)
+
+$def render_nodes(nodelist):
+    <ul>
+    $for node in nodelist:
+        <li><a href="place.jsp?id=$node.get_id()">$node.get_label()</a>
+        $ children = node.get_children()
+        $if children:
+            $:render_nodes(children)
+        </li>
+    </ul>
+
+<h1>Places</h1>
+
+$:render_nodes(tree.get_roots())

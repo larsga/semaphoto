@@ -6,12 +6,11 @@ import sparql
 # TODO
 #  - install Virtuoso on Linux  
 #
-#  - privacy filtering
 #  - places
+#    - sort the tree
+#    - apply +/- javascript etc
 #  - years and months
 #  - map
-#  - logging in
-#  - admin mode functions: delete etc
 #  - rating of photos
 #  - comments (requires markup rendering)
 #  - metadata about photo collection (requires markup rendering)
@@ -20,6 +19,11 @@ import sparql
 #  - small map of place
 #  - facet navigators
 #  - search
+#  - context sequence
+
+#  - privacy filtering
+#  - logging in
+#  - admin mode functions: delete etc
 
 # TODO AFTER CHANGEOVER
 #  - add config file, for loading location of images
@@ -235,7 +239,25 @@ class CategoryPage:
 
 class PlacesPage:
     def GET(self):
-        return "<p>Uhhh..."
+        # 1. do flat query
+        query = '''
+          select ?parent, ?place, ?label, ?id where {
+            ?place a sp:Place;
+              sp:name ?label;
+              sp:id ?id.
+            OPTIONAL {
+              ?place sp:contained-in ?parent .
+            }
+          }
+        '''
+        
+        # 2. build tree model
+        tree = TreeModel()
+        for (parent, place, label, id) in q(query):
+            tree.add_node(parent and str(parent), str(place), label.value, id.value)
+        
+        # 3. render
+        return render.places(tree)
 
 class PlacePage:
     def GET(self):
@@ -247,6 +269,70 @@ class PlacePage:
 
 # --- MODEL
 
+class TreeModel:
+
+    def __init__(self):
+        self._uri_to_node = {}
+        self._roots = []
+
+    def get_roots(self):
+        return self._roots
+        
+    def add_node(self, parent, place, label, id):
+        pnode = self._uri_to_node.get(parent)
+        if parent and not pnode:
+            # there is a parent, but we haven't seen it before, so
+            # make a place-holder
+            pnode = TreeNode(None, parent)
+            self._uri_to_node[parent] = pnode
+            # as far as we know, this is a root
+            self._roots.append(pnode)
+
+        node = self._uri_to_node.get(place)
+        if not node:
+            node = TreeNode(pnode, place, label, id)
+            self._uri_to_node[place] = node
+            if not pnode:
+                self._roots.append(node)
+        else:
+            # we've been observed as somebody's parent before, so just
+            # fill in the values
+            node.set(pnode, place, label, id)
+
+            # when we were seen earlier we must have been considered a
+            # root, but if pnode is set that's not true
+            if pnode:
+                self._roots.remove(node)
+
+class TreeNode:
+
+    def __init__(self, parent, uri, label = None, id = None):
+        self.set(parent, uri, label, id)
+        self._children = []
+
+    def add_child(self, child):
+        self._children.append(child)
+
+    def set(self, parent, uri, label, id):
+        self._parent = parent
+        self._uri = uri
+        self._label = label
+        self._id = id
+        if parent:
+            parent.add_child(self)
+
+    def get_children(self):
+        return self._children
+
+    def get_label(self):
+        return self._label
+
+    def get_id(self):
+        return self._id
+
+    def get_uri(self):
+        return self._uri
+            
 class ListPager:
 
     def __init__(self, fragment, sortdir = "desc"):

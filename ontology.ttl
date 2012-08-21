@@ -60,7 +60,7 @@ sp:Place a owl:Class;
 
 sp:name a owl:DatatypeProperty;
   rdfs:label "Name";
-  # doman is: place, person, event, category
+  # domain is: place, person, event, category
   rdfs:range rdfs:Literal.
 
 sp:taken-at a owl:ObjectProperty;
