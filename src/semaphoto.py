@@ -6,7 +6,7 @@ import sparql
 # TODO
 #  - install Virtuoso on Linux  
 #
-#  - years and months
+#  - months
 #  - map
 #  - rating of photos
 #  - comments (requires markup rendering)
@@ -44,6 +44,7 @@ urls = (
     '/category\\.jsp', 'CategoryPage',
     '/places\\.jsp', 'PlacesPage',
     '/place\\.jsp', 'PlacePage',
+    '/year\\.jsp', 'YearPage',
     )
 
 class StartPage:
@@ -265,6 +266,14 @@ class PlacePage:
         f = '?i sp:taken-at ?p. ?p sp:id "%s". ' % place_id
         return render.photolist(name, conf, ListPager(f), place_id)
 
+class YearPage:
+    def GET(self):
+        year = web.input()["year"]
+        f = 'FILTER(bif:starts_with(?time, "%s"))' % year
+        qe = '?i sp:time-taken ?time .'
+        return render.photolist(year, conf, ListPager(f, "asc", qe, "year"),
+                                year)
+
 # --- MODEL
 
 class TreeModel:
@@ -349,18 +358,24 @@ class TreeNode:
             
 class ListPager:
 
-    def __init__(self, fragment, sortdir = "desc"):
+    def __init__(self, fragment, sortdir = "desc", count_extra = '',
+                 idparam = 'id'):
         self._fragment = fragment
         self._page_no = int(web.input().get("n", 1))
-        count = q_get('select count(?i) where { %s } ' % self._fragment)
+        count = q_get('select count(?i) where { %s %s } ' %
+                      (count_extra, self._fragment))
         self._count = int(count.value)
         self._sortdir = sortdir
+        self._idparam = idparam
 
     def get_page_count(self):
         return self._count / 50 + 1
 
     def get_page_no(self, offset = 0):
         return self._page_no + offset
+
+    def get_page_no_params(self, topic_id, page_no):
+        return "?%s=%s&n=%s" % (self._idparam, topic_id, page_no)
 
     def get_photos(self):
         offset = (self._page_no - 1) * 50
