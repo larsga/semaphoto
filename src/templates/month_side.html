@@ -1,0 +1,10 @@
+$def with (months)
+
+$if months:
+    <div style="float: right">
+    <h2>Months</h2>
+    <div style="border: solid black 1pt; padding: 6pt">
+    $for month in months:
+        <a href="month.jsp?month=$month">$month</a><br>
+    </div>
+    </div>

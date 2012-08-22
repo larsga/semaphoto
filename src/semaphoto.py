@@ -6,7 +6,6 @@ import sparql
 # TODO
 #  - install Virtuoso on Linux  
 #
-#  - months
 #  - map
 #  - rating of photos
 #  - comments (requires markup rendering)
@@ -45,6 +44,7 @@ urls = (
     '/places\\.jsp', 'PlacesPage',
     '/place\\.jsp', 'PlacePage',
     '/year\\.jsp', 'YearPage',
+    '/month\\.jsp', 'MonthPage',
     )
 
 class StartPage:
@@ -269,11 +269,29 @@ class PlacePage:
 class YearPage:
     def GET(self):
         year = web.input()["year"]
-        f = 'FILTER(bif:starts_with(?time, "%s"))' % year
+        f = 'FILTER(bif:starts_with(?time, "%s-"))' % year
         qe = '?i sp:time-taken ?time .'
-        return render.photolist(year, conf, ListPager(f, "asc", qe, "year"),
-                                year)
 
+        monthquery = '''
+          select distinct bif:substring(?time, 1, 7) as ?month where {
+            ?i sp:time-taken ?time
+            FILTER(bif:starts_with(?time, "%s-")).
+          } order by ?month
+        ''' % year
+
+        months = [month.value for (month,) in q(monthquery)]
+        sidebar = lambda: side_render.month_side(months)
+        return render.photolist(year, conf, ListPager(f, "asc", qe, "year"),
+                                year, sidebar)
+
+class MonthPage:
+    def GET(self):
+        month = web.input()["month"]
+        f = 'FILTER(bif:starts_with(?time, "%s-"))' % month
+        qe = '?i sp:time-taken ?time .'
+        return render.photolist(month, conf, ListPager(f, "asc", qe, "month"),
+                                month)
+    
 # --- MODEL
 
 class TreeModel:
@@ -425,6 +443,7 @@ web.webapi.internalerror = web.debugerror
 appdir = os.path.dirname(__file__)
 render = web.template.render(os.path.join(appdir, 'templates/'),
                              base = "base")
+side_render = web.template.render(os.path.join(appdir, 'templates/'))
 
 app = web.application(urls, globals(), autoreload = False)
 #app.internalerror = Error
