@@ -1,14 +1,49 @@
 $def with (tree)
 
-$def render_nodes(nodelist):
-    <ul>
+<script>
+function endswith(str, sub) {
+  return str.substring(str.length - sub.length) == sub;
+}
+  
+function flip(elem) {
+  if (endswith(elem.src, 'expand.gif')) {
+    var classname = 'visible';
+    elem.src = elem.src.replace('expand', 'collapse');
+  } else {
+    var classname = 'hidden';
+    elem.src = elem.src.replace('collapse', 'expand');
+  }
+
+  elem = elem.parentNode;
+  for (var ix = 0; ix < elem.childNodes.length; ix++) {
+    var child = elem.childNodes[ix];
+    if (child.nodeName != 'DIV')
+      continue;
+    child.className = classname;
+  }
+}
+</script>
+
+$def render_nodes(nodelist, level = 0):
     $for node in nodelist:
-        <li><a href="place.jsp?id=$node.get_id()">$node.get_label()</a>
+        $if node.get_children():
+            $ button = "expand"
+        $else:
+            $ button = "boxed"
+
+        $if level:
+            $ margin = 30
+            $ klass = "hidden"
+        $else:
+            $ margin = 0
+            $ klass = "visible"
+
+        <div style="margin-left: $(margin)pt" class=$klass>
+        <img src=static/$(button).gif onclick="flip(this)"><a href="place.jsp?id=$node.get_id()">$node.get_label()</a>
         $ children = node.get_children()
         $if children:
-            $:render_nodes(children)
-        </li>
-    </ul>
+            $:render_nodes(children, level + 1)
+        </div>
 
 <h1>Places</h1>
 

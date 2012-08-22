@@ -24,6 +24,10 @@ th {
   text-align: left;
 }
 
+img {
+  border: none;
+}
+
 img.frame {
   border: solid 2pt black;
 }

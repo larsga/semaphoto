@@ -6,8 +6,6 @@ import sparql
 # TODO
 #  - install Virtuoso on Linux  
 #
-#  - places
-#    - apply +/- javascript etc
 #  - years and months
 #  - map
 #  - rating of photos
