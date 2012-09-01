@@ -1,0 +1,12 @@
+$def with (places)
+
+<div style="float: right">
+<h2>Places in</h2>
+
+<div style="border: solid black 1pt; padding: 6pt">
+  
+$for (pid, label) in places:
+    <a href="place.jsp?id=$pid">$label</a><br>
+    
+</div>
+</div>
