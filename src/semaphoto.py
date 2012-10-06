@@ -6,19 +6,17 @@ import sparql
 # TODO
 #  - install Virtuoso on Linux  
 #
-#  - rating of photos
-#  - comments (requires markup rendering)
-#  - metadata about photo collection (requires markup rendering)
-#  - ancestors of place
-#  - small map of place
 #  - facet navigators
 #  - search
 #  - context sequence
 #  - Norwegian character problem
+#  - metadata about photo collection (requires markup rendering)
 
-#  - privacy filtering
 #  - logging in
-#  - admin mode functions: delete etc
+#    - rating of photos
+#    - comments (requires markup rendering)
+#    - privacy filtering
+#    - admin mode functions: delete etc
 
 # TODO AFTER CHANGEOVER
 #  - add config file, for loading location of images
@@ -280,10 +278,28 @@ class PlacePage:
                sp:name ?label.
           }
         ''' % place_id)
-        if children:
-            sidebar = lambda: side_render.place_side(children)
-        else:
-            sidebar = None
+        coords = q('''select ?lt ?ln where {
+          ?parent sp:id "%s";
+            sp:latitude ?lt;
+            sp:longitude ?ln. }''' % place_id)
+        positioned = []
+        if coords:
+            query = '''
+              select ?place, ?label, ?id, ?lat, ?long, ?desc where {
+                ?place a sp:Place;
+                  sp:name ?label;
+                  sp:id ?id;
+                  sp:latitude ?lat;
+                  sp:longitude ?long.
+                OPTIONAL {
+                  ?place sp:description ?desc.
+                }
+              }
+            '''
+            positioned = q(query)
+            
+        sidebar = lambda: side_render.place_side(place_id, children,
+                                                 coords, positioned)
 
         # top bar
         ancestors = []

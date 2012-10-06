@@ -1,6 +1,6 @@
 $def with (id, title, time, event_id, event_name, place_id, place_name, desc, cats, people, prev, next, conf)
 
-<h1>$title</h1>
+$var title = title
 
 $if prev:
     <a href="photo.jsp?id=$prev"><img src="static/nav_prev.gif"></a>

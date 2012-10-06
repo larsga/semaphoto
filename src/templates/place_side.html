@@ -1,12 +1,81 @@
-$def with (places)
+$def with (place_id, places, coords, positioned)
 
-<div style="float: right">
-<h2>Places in</h2>
+<div style="float: right; width: 30%">
 
-<div style="border: solid black 1pt; padding: 6pt">
-  
-$for (pid, label) in places:
-    <a href="place.jsp?id=$pid">$label</a><br>
+$if coords:
+    $ lat = coords[0][0].value
+    $ long = coords[0][1].value
+
+    <div id="map" style="width: 100%; height: 200px"></div>
+
+    <script src="http://maps.google.com/maps?file=api&amp;v=1&amp;key=<%= gmapkey %>" type="text/javascript"></script>    
+    <script type="text/javascript">
+    // the place icon
+    var placeicon = new GIcon();
+    placeicon.image = 'http://www.garshol.priv.no/tmphoto/resources/blue-dot.gif';
+    placeicon.iconSize = new GSize(12, 12);
+    placeicon.iconAnchor = new GPoint(5, 5);
+    placeicon.infoWindowAnchor = new GPoint(9, 2);
+    placeicon.infoShadowAnchor = new GPoint(18, 25);
+
+    // the highlighted place icon
+    var blueicon = new GIcon();
+    blueicon.image = 'http://www.garshol.priv.no/tmphoto/resources/green-dot.gif';
+    blueicon.iconSize = new GSize(12, 12);
+    blueicon.iconAnchor = new GPoint(5, 5);
+    blueicon.infoWindowAnchor = new GPoint(9, 2);
+    blueicon.infoShadowAnchor = new GPoint(18, 25);
+
+    // opens info window for marker
+    function marker_clicked(marker) {
+      if (!marker)
+        return;
+      // have to clone the nodes, because GMap appears to discard them
+      // when the window is closed
+      element = document.getElementById(marker.popupid).cloneNode(true);
+      element.style.display = '';
+      map.openInfoWindow(marker.getPoint(), element);
+    }
+
+    // adds a place marker to the map
+    function add_place(x, y, name, popupid, icon) { 
+      marker = new GMarker(new GPoint(x, y), icon);
+      marker.popupid = popupid;
+      GEvent.addListener(map, 'click', marker_clicked);
+      map.addOverlay(marker);
+    }
+
+    // creating the map
+    var map = new GMap(document.getElementById('map'));
+    map.addControl(new GSmallMapControl());
+    // doing this here since map is now correctly sized
+    map.centerAndZoom(new GPoint($long, $lat), 12);
+    </script>
+
+    $for (place, label, id, olat, olong, desc) in positioned:
+        <script type="text/javascript">
+        $if place_id == id.value:
+            $ icon = 'blueicon'
+        $else:
+            $ icon = 'placeicon'
+        add_place($olong, $olat, '$label', '$place', $icon);
+        </script>
+        <div style="display: none; font-family: Arial; font-size: 8pt; width: 50px" 
+           id="$id">
+        <b>$label</b><br>
+        $if desc:
+            $desc
+        <a href="$id">Pictures</a>
+        </div>
     
-</div>
+$if places:
+    <h2>Places in</h2>
+    
+    <div style="border: solid black 1pt; padding: 6pt">
+      
+    $for (pid, label) in places:
+        <a href="place.jsp?id=$pid">$label</a><br>
+        
+    </div>
+    
 </div>
