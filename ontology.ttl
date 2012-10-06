@@ -73,6 +73,16 @@ sp:contained-in a owl:TransitiveProperty;
   rdfs:domain sp:Place;
   rdfs:range sp:Place.
 
+sp:latitude a owl:DatatypeProperty;
+  rdfs:label "Latitude";
+  rdfs:domain sp:Place;
+  rdfs:range xsd:decimal.
+
+sp:longitude a owl:DatatypeProperty;
+  rdfs:label "Longitude";
+  rdfs:domain sp:Place;
+  rdfs:range xsd:decimal.
+
 # ----- PERSON
 
 sp:Person a owl:Class;

@@ -1,4 +1,4 @@
-$def with (name, conf, pager, topic_id, sidebar = None)
+$def with (name, conf, pager, topic_id, sidebar = None, topbar = None)
 
 $def paging():
     $if pager.get_page_count() > 1:
@@ -19,6 +19,9 @@ $def paging():
          </p>
                  
 <h1>$name</h1>
+
+$if topbar:
+    $:topbar()
 
 $if sidebar:
     $:sidebar()

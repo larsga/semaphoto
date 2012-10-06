@@ -6,16 +6,17 @@ import sparql
 # TODO
 #  - install Virtuoso on Linux  
 #
-#  - map
+#  - proper titles on pages
+#  - places: also include everything in "sub-places"
 #  - rating of photos
 #  - comments (requires markup rendering)
 #  - metadata about photo collection (requires markup rendering)
-#  - layout of photo page
 #  - ancestors of place
 #  - small map of place
 #  - facet navigators
 #  - search
 #  - context sequence
+#  - Norwegian character problem
 
 #  - privacy filtering
 #  - logging in
@@ -45,12 +46,13 @@ urls = (
     '/place\\.jsp', 'PlacePage',
     '/year\\.jsp', 'YearPage',
     '/month\\.jsp', 'MonthPage',
+    '/map\\.jsp', 'MapPage',
     )
 
 class StartPage:
     def GET(self):
         types = [("People", "sp:Person", "people.jsp"),
-                 ("Places", "sp:Place", ""),
+                 ("Places", "sp:Place", "places.jsp"),
                  ("Events", "sp:Event", "events.jsp"),
                  ("Categories", "sp:Category", "categories.jsp")]
         counts = [(label, count(type), link) for (label, type, link) in types]
@@ -254,17 +256,58 @@ class PlacesPage:
         for (parent, place, label, id) in q(query):
             tree.add_node(parent and str(parent), str(place), label.value, id.value)
         tree.sort()
-        
+       
         # 3. render
         return render.places(tree)
 
 class PlacePage:
     def GET(self):
         place_id = web.input()["id"]
+
+        # main page
         name = q_get('select ?name where { ?s sp:id "%s"; sp:name ?name }' %
                      place_id)
         f = '?i sp:taken-at ?p. ?p sp:id "%s". ' % place_id
-        return render.photolist(name, conf, ListPager(f), place_id)
+
+        # side bar
+        children = q('''
+          select ?pid ?label where {
+            ?place sp:contained-in ?parent.
+            ?parent sp:id "%s".
+            ?place sp:id ?pid;
+               sp:name ?label.
+          }
+        ''' % place_id)
+        if children:
+            sidebar = lambda: side_render.place_side(children)
+        else:
+            sidebar = None
+
+        # top bar
+        ancestors = []
+        current = place_id
+        while 1:
+            row = q_row('''select ?pid ?label where {
+              ?s sp:id "%s";
+                sp:contained-in ?parent.
+              ?parent sp:id ?pid;
+                sp:name ?label.
+            }
+            ''' % current)
+            if row:
+                (pid, label) = row
+                ancestors.append((pid, label))
+                current = pid
+            else:
+                break
+        if ancestors:
+            ancestors.reverse()
+            topbar = lambda: side_render.place_top(ancestors)
+        else:
+            topbar = None
+            
+        return render.photolist(name, conf, ListPager(f), place_id, sidebar,
+                                topbar)
 
 class YearPage:
     def GET(self):
@@ -291,6 +334,22 @@ class MonthPage:
         qe = '?i sp:time-taken ?time .'
         return render.photolist(month, conf, ListPager(f, "asc", qe, "month"),
                                 month)
+
+class MapPage:
+    def GET(self):
+        query = '''
+          select ?place, ?label, ?id, ?lat, ?long, ?desc where {
+            ?place a sp:Place;
+              sp:name ?label;
+              sp:id ?id;
+              sp:latitude ?lat;
+              sp:longitude ?long.
+            OPTIONAL {
+              ?place sp:description ?desc.
+            }
+          }
+        '''
+        return render.mappage(conf, q(query))
     
 # --- MODEL
 
@@ -412,11 +471,14 @@ class Configuration:
 
     def get_photo_uri(self):
         return "http://larsga.geirove.org/photoserv.fcgi?"
+
+    def get_gmaps_key(self):
+        return None
     
 # --- UTILITIES
 
 def q(query):
-    return sparql.query(ENDPOINT, PREFIXES + query)
+    return sparql.query(ENDPOINT, PREFIXES + query).fetchall()
 
 def q_get(query):
     row = sparql.query(ENDPOINT, PREFIXES + query).fetchone()
@@ -424,14 +486,16 @@ def q_get(query):
     return a[0]
 
 def q_row(query):
-    row = sparql.query(ENDPOINT, PREFIXES + query).fetchone()
-    (a, ) = row
-    return a
+    rows = sparql.query(ENDPOINT, PREFIXES + query).fetchall()
+    if rows:
+        return rows[0]
+    else:
+        return None
 
 def count(type):
     query = "SELECT DISTINCT count(*) WHERE {?s a %s}" % type
     result = q(query)
-    return int(result.fetchone().next()[0].value)
+    return int(result[0][0].value)
 
 # --- SETUP
         
