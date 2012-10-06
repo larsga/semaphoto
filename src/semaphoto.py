@@ -6,7 +6,6 @@ import sparql
 # TODO
 #  - install Virtuoso on Linux  
 #
-#  - places: also include everything in "sub-places"
 #  - rating of photos
 #  - comments (requires markup rendering)
 #  - metadata about photo collection (requires markup rendering)
@@ -266,7 +265,11 @@ class PlacePage:
         # main page
         name = q_get('select ?name where { ?s sp:id "%s"; sp:name ?name }' %
                      place_id)
-        f = '?i sp:taken-at ?p. ?p sp:id "%s". ' % place_id
+        f = '''
+          ?p sp:id "%s".
+          ?i sp:taken-at ?c. 
+          ?c sp:contained-in ?p option (transitive, t_min (0), t_distinct)
+        ''' % place_id
 
         # side bar
         children = q('''
