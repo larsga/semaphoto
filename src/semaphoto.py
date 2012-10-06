@@ -7,7 +7,6 @@ import sparql
 #  - install Virtuoso on Linux  
 #
 #  - facet navigators
-#  - search
 #  - context sequence
 #  - Norwegian character problem
 #  - metadata about photo collection (requires markup rendering)
@@ -26,8 +25,9 @@ import sparql
 #  - fullscreen mode
 #  - tagging?
 
+NS_SP = 'http://psi.garshol.priv.no/semaphoto/ont/'
 ENDPOINT = "http://localhost:8890/sparql"
-PREFIXES = "PREFIX sp: <http://psi.garshol.priv.no/semaphoto/ont/>"
+PREFIXES = 'PREFIX sp: <%s>' % NS_SP
 
 urls = (
     '/', 'StartPage',
@@ -43,6 +43,8 @@ urls = (
     '/year\\.jsp', 'YearPage',
     '/month\\.jsp', 'MonthPage',
     '/map\\.jsp', 'MapPage',
+    '/search-form\\.jsp', 'SearchPage',
+    '/search-result\\.jsp', 'SearchResultsPage',
     )
 
 class StartPage:
@@ -368,7 +370,49 @@ class MapPage:
           }
         '''
         return render.mappage(conf, q(query))
+
+class SearchPage:
+    def GET(self):
+        return render.search()
     
+class SearchResultsPage:
+    def GET(self):
+        # this is the default Virtuoso fct search query, modified for
+        # our purposes
+        search = web.input()["search"]
+        query = '''
+select ?s1 as ?c1, ( bif:search_excerpt ( bif:vector ( %s ) , ?o1 ) ) as ?c2, ?type, ?id where 
+  { 
+    { 
+      { 
+        select ?s1, ( ?sc * 3e-1 ) as ?sc, ?o1, ( sql:rnk_scale ( <LONG::IRI_RANK> ( ?s1 ) ) ) as ?rank where 
+        { 
+          quad map virtrdf:DefaultQuadMap 
+          { 
+            graph <http://psi.garshol.priv.no/semaphoto/graph>
+            { 
+              ?s1 ?s1textp ?o1 .
+              ?o1 bif:contains '%s' option ( score ?sc ) .
+              
+            }
+           }
+         }
+       order by desc ( ?sc * 3e-1 + sql:rnk_scale ( <LONG::IRI_RANK> ( ?s1 ) ) ) limit 50 offset 0 
+      }
+     }
+     ?s1 a ?type; sp:id ?id .
+   }
+  ''' % (token_list_for_search(search),
+         tokenize_for_search(search))
+        results = q(query)
+        return render.search_result(conf, search, results, typemap)
+
+def tokenize_for_search(search):
+    return '( %s )' % ' AND '.join([t.upper() for t in search.split()])
+
+def token_list_for_search(search):
+    return ', '.join(["'%s'" % t.upper() for t in search.split()])
+
 # --- MODEL
 
 class TreeModel:
@@ -500,6 +544,7 @@ def q(query):
 
 def q_get(query):
     row = sparql.query(ENDPOINT, PREFIXES + query).fetchone()
+    # FIXME: need to handle no values, somehow
     (a, ) = row
     return a[0]
 
@@ -514,6 +559,15 @@ def count(type):
     query = "SELECT DISTINCT count(*) WHERE {?s a %s}" % type
     result = q(query)
     return int(result[0][0].value)
+
+# --- CONSTANTS
+
+typemap = {
+    NS_SP + 'Person'   : 'person.jsp',
+    NS_SP + 'Place'    : 'place.jsp',
+    NS_SP + 'Event'    : 'event.jsp',
+    NS_SP + 'Category' : 'category.jsp',
+    }
 
 # --- SETUP
         

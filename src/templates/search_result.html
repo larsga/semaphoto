@@ -1,0 +1,19 @@
+$def with (conf, query, results, typemap)
+
+$var title = 'Search results'
+
+<form method=get action=search-result.jsp>
+<input name=search size=50 style="font-size: 140%" value="$query">
+<input type=submit value=Search style="font-size: 140%">
+</form>
+
+<table>
+$for (c1, c2, type, id) in results:
+    <tr>
+    $if type.value == 'http://psi.garshol.priv.no/semaphoto/ont/Photo':
+        <td><a href="photo.jsp?id=$id"
+              ><img src="$conf.get_photo_uri()$id;thumb"></a>
+    $else:
+        <td><a href="$typemap[type.value]?id=$id">Link</a>
+    <td>$:c2
+</table>
