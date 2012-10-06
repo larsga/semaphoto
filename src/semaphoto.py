@@ -6,7 +6,6 @@ import sparql
 # TODO
 #  - install Virtuoso on Linux  
 #
-#  - proper titles on pages
 #  - places: also include everything in "sub-places"
 #  - rating of photos
 #  - comments (requires markup rendering)
@@ -514,5 +513,3 @@ app = web.application(urls, globals(), autoreload = False)
 
 if __name__ == "__main__":
     app.run()
-
-#print PeoplePage().GET()

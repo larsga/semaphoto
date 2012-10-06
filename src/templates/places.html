@@ -1,5 +1,7 @@
 $def with (tree)
 
+$var title = "Places"
+
 <script>
 function endswith(str, sub) {
   return str.substring(str.length - sub.length) == sub;
@@ -44,8 +46,6 @@ $def render_nodes(nodelist, level = 0):
         $if children:
             $:render_nodes(children, level + 1)
         </div>
-
-<h1>Places</h1>
 
 <p><a href="map.jsp">Map</a></p>
 

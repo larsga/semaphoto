@@ -1,5 +1,7 @@
 $def with (name, conf, pager, topic_id, sidebar = None, topbar = None)
 
+$var title = name
+
 $def paging():
     $if pager.get_page_count() > 1:
          <p>
@@ -17,8 +19,6 @@ $def paging():
              <a href="$pager.get_page_no_params(topic_id, pager.get_page_no(1))"
                ><img src="/static/nav_next.gif" alt="next"></a>
          </p>
-                 
-<h1>$name</h1>
 
 $if topbar:
     $:topbar()
