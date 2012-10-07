@@ -1,15 +1,15 @@
 
 import os
 import web
+import markdown2
 import sparql
 
 # TODO
 #  - install Virtuoso on Linux  
 #
+#  - Norwegian character problem
 #  - facet navigators
 #  - context sequence
-#  - Norwegian character problem
-#  - metadata about photo collection (requires markup rendering)
 
 #  - logging in
 #    - rating of photos
@@ -77,8 +77,20 @@ class StartPage:
             place = (pid, pname)
         if eid:
             event = (eid, ename)
-        
-        return render.startpage(counts, label, id, time, place, event, conf)
+
+        p = q('''
+          select ?l ?d where {
+            <%s> rdfs:label ?l; sp:description ?d
+          }
+        ''' % conf.get_photo_graph())[0]
+        (title, desc) = p
+
+        total = q_get('select count(*) where { ?s a sp:Photo }')
+
+        # do markdown conversion here
+        desc = markdown2.markdown(desc.value)
+        return render.startpage(counts, label, id, time, place, event, conf,
+                                title, desc, total)
 
 class PeoplePage:
     def GET(self):
@@ -532,10 +544,13 @@ class ListPager:
 class Configuration:
 
     def get_photo_uri(self):
-        return "http://larsga.geirove.org/photoserv.fcgi?"
+        return 'http://larsga.geirove.org/photoserv.fcgi?'
 
     def get_gmaps_key(self):
         return None
+
+    def get_photo_graph(self):
+        return 'http://psi.garshol.priv.no/semaphoto/graph'
     
 # --- UTILITIES
 

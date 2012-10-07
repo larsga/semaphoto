@@ -1,8 +1,6 @@
-$def with (counts, label, id, time, place, event, conf)
+$def with (counts, label, id, time, place, event, conf, title, desc, total)
 
-$var title = "semaphoto"
-
-<p>You can access the photos through lists of:</p>
+$var title = title
 
 <div style="float: right">
   $label<br>
@@ -16,7 +14,13 @@ $var title = "semaphoto"
   </div>
 </div>
 
+$:desc
+
+<p>You can access the photos through lists of:</p>
+
 <table>
 $for (type, count, link) in counts:
     <tr><td><a href="$link">$type</a> <td>$count
 </table>
+
+<p>There are $total photos in the system altogether.</p>
