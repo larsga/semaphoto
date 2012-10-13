@@ -7,9 +7,10 @@ import sparql
 # TODO
 #  - install Virtuoso on Linux  
 #
-#  - Norwegian character problem
 #  - facet navigators
 #  - context sequence
+#  - order by: time | score
+#  - Norwegian character problem -> Virtuoso bug, can't fix now
 
 #  - logging in
 #    - rating of photos
@@ -45,6 +46,7 @@ urls = (
     '/map\\.jsp', 'MapPage',
     '/search-form\\.jsp', 'SearchPage',
     '/search-result\\.jsp', 'SearchResultsPage',
+    '/best-photos\\.jsp', 'BestPhotosPage',
     )
 
 class StartPage:
@@ -424,6 +426,50 @@ def tokenize_for_search(search):
 
 def token_list_for_search(search):
     return ', '.join(["'%s'" % t.upper() for t in search.split()])
+
+class BestPhotosPage:
+    def GET(self):
+        return render.photolist('Best photos', conf, BestPager(), None)
+
+class BestPager:
+
+    def __init__(self):
+        self._page_no = int(web.input().get("n", 1))
+        count = q_get('''
+            SELECT count(?s)
+            WHERE {
+              ?s a sp:Photo.
+              FILTER EXISTS {?r sp:object-rated ?s.}
+            }
+         ''')
+        self._count = int(count.value)
+
+    def get_page_count(self):
+        return self._count / 50 + 1
+
+    def get_page_no(self, offset = 0):
+        return self._page_no + offset
+
+    def get_page_no_params(self, topic_id, page_no):
+        return "?n=%s" % (page_no)
+
+    def get_photos(self):
+        offset = (self._page_no - 1) * 50
+        query = """
+          SELECT ?id ?title ?time avg(?score) as ?avg count(?score) as ?c
+          WHERE {
+            ?s a sp:Photo;
+              dc:title ?title;
+              sp:id ?id;
+              sp:time-taken ?time.
+            ?r sp:object-rated ?s;
+              sp:rating ?score.
+          } 
+          GROUP BY ?id ?title ?time
+          ORDER BY desc(?avg) desc(?c)
+          LIMIT 50 OFFSET %s
+        """ % (offset)
+        return q(query)
 
 # --- MODEL
 

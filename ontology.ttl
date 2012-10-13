@@ -139,3 +139,33 @@ sp:in-category a owl:ObjectProperty;
   rdfs:label "In category";
   rdfs:domain sp:Image;
   rdfs:range sp:Category.
+
+# ----- RATING
+
+sp:Rating a owl:Class;
+  rdfs:label "Rating";
+  owl:disjointWith sp:Image;
+  owl:disjointWith sp:Place;
+  owl:disjointWith sp:Person;
+  owl:disjointWith sp:Event;
+  owl:disjointWith sp:Category.
+
+sp:rating a owl:DatatypeProperty;
+  rdfs:label "Rating";
+  rdfs:domain sp:Rating;
+  rdfs:range xsd:integer.
+
+sp:rated-by a owl:ObjectProperty;
+  rdfs:label "Rated by";
+  rdfs:domain sp:Rating;
+  rdfs:range sp:Person.
+
+sp:time-rated a owl:DatatypeProperty;
+  rdfs:label "Time rated";
+  rdfs:domain sp:Rating;
+  rdfs:range xsd:dateTime.
+
+sp:object-rated a owl:DatatypeProperty;
+  rdfs:label "Object rated";
+  rdfs:domain sp:Rating;
+  rdfs:range sp:Image.

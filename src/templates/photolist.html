@@ -29,7 +29,8 @@ $if sidebar:
 $:paging()
 
 <table>
-$for (id, title, time) in pager.get_photos():
+$for row in pager.get_photos():
+    $ (id, title, time) = row[ : 3]
     <tr><td><a href="photo.jsp?id=$id"
               ><img src="$conf.get_photo_uri()$id;thumb"></a>
         <td style="font-size: 75%">$title<br>
