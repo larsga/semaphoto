@@ -9,7 +9,6 @@ import sparql
 #
 #  - facet navigators
 #  - context sequence
-#  - order by: time | score
 #  - Norwegian character problem -> Virtuoso bug, can't fix now
 
 #  - logging in
@@ -32,6 +31,7 @@ PREFIXES = 'PREFIX sp: <%s>' % NS_SP
 
 urls = (
     '/', 'StartPage',
+    '/index\\.jsp', 'StartPage',
     '/people\\.jsp', 'PeoplePage',
     '/person\\.jsp', 'PersonPage',
     '/photo\\.jsp', 'PhotoPage',
@@ -444,14 +444,17 @@ class BestPager:
          ''')
         self._count = int(count.value)
 
+    def can_be_chronological(self):
+        return False # sorting by time makes no sense here
+
     def get_page_count(self):
         return self._count / 50 + 1
 
     def get_page_no(self, offset = 0):
         return self._page_no + offset
 
-    def get_page_no_params(self, topic_id, page_no):
-        return "?n=%s" % (page_no)
+    def get_page_no_params(self, topic_id, page_no = None):
+        return "?n=%s" % (page_no or self._page_no)
 
     def get_photos(self):
         offset = (self._page_no - 1) * 50
@@ -564,27 +567,47 @@ class ListPager:
         self._count = int(count.value)
         self._sortdir = sortdir
         self._idparam = idparam
+        self._sortby = web.input().get("sort", "time")
 
+    def can_be_chronological(self):
+        return True # sorting by time makes no sense here
+
+    def get_sort_by(self):
+        return self._sortby
+    
     def get_page_count(self):
         return self._count / 50 + 1
 
     def get_page_no(self, offset = 0):
         return self._page_no + offset
 
-    def get_page_no_params(self, topic_id, page_no):
-        return "?%s=%s&n=%s" % (self._idparam, topic_id, page_no)
+    def get_page_no_params(self, topic_id, page_no = None):
+        return "?%s=%s&n=%s" % (self._idparam, topic_id,
+                                page_no or self._page_no)
 
     def get_photos(self):
         offset = (self._page_no - 1) * 50
+
+        select = ''
+        scorebit = ''
+        groupby = ''
+        if self._sortby == 'score':
+            select = ', avg(?rating) as ?score'
+            scorebit = '?r sp:object-rated ?i; sp:rating ?rating.'
+            groupby = 'group by ?id ?title ?time'
+            self._sortdir = 'desc'
+        
         query = """
-          select ?id, ?title, ?time
+          select ?id, ?title, ?time %s
           where { 
             ?i sp:id ?id;
               dc:title ?title;
               sp:time-taken ?time.
             %s
-          } order by %s(?time) offset %s limit 50
-        """ % (self._fragment, self._sortdir, offset)
+            %s
+          } %s order by %s(?%s) offset %s limit 50
+        """ % (select, self._fragment, scorebit, groupby, self._sortdir,
+               self._sortby, offset)
         return q(query)
         
 class Configuration:

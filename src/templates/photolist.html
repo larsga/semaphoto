@@ -26,6 +26,15 @@ $if topbar:
 $if sidebar:
     $:sidebar()
 
+$if pager.can_be_chronological():
+    <p>Sort by:
+    $if pager.get_sort_by() == 'time':
+        <b>Time</b> |
+        <a href="$pager.get_page_no_params(topic_id)&sort=score">Score</a></p>
+    $else:
+        <a href="$pager.get_page_no_params(topic_id)">Time</a> |
+        <b>Score</b></p>
+         
 $:paging()
 
 <table>
@@ -35,7 +44,7 @@ $for row in pager.get_photos():
     $if len(row) > 3:
         $ fourth = row[3]
     <tr><td><a href="photo.jsp?id=$id"
-              ><img src="$conf.get_photo_uri()$id;thumb"></a>
+    ><img src="$conf.get_photo_uri()$id;thumb"></a>
         <td style="font-size: 75%">$title<br>
             $time<br>$fourth
   
