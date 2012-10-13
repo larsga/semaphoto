@@ -29,12 +29,15 @@ $if sidebar:
 $:paging()
 
 <table>
+$ fourth = ''
 $for row in pager.get_photos():
     $ (id, title, time) = row[ : 3]
+    $if len(row) > 3:
+        $ fourth = row[3]
     <tr><td><a href="photo.jsp?id=$id"
               ><img src="$conf.get_photo_uri()$id;thumb"></a>
         <td style="font-size: 75%">$title<br>
-            $time
+            $time<br>$fourth
   
 </table>
 
