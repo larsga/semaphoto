@@ -103,6 +103,12 @@ sp:depicted-in a owl:ObjectProperty;
   owl:inverseOf sp:depicts;
   rdfs:subPropertyOf foaf:depiction.
 
+sp:taken-by a owl:ObjectProperty;
+  rdfs:label "Taken by";
+  rdfs:domain sp:Image;
+  rdfs:range sp:Person;
+  rdfs:subPropertyOf foaf:maker.
+
 # ----- EVENT
 
 sp:Event a owl:Class;
