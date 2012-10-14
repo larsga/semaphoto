@@ -1,0 +1,35 @@
+$def with (username, referrer, message)
+
+$if username:
+    $var title = 'Log out'
+$else:
+    $var title = 'Log in'
+$var logged_in = username
+
+$if message:
+    <p><b>$message</b></p>
+
+$if not username:
+    <form method="post" action="process-login">
+    <input type=hidden name=goto value="$referrer">
+    
+    <table>
+    <tr><td>Username
+        <td><input type=text name=username size=10>
+    <tr><td>Password
+        <td><input type=password name=password size=10>
+    <tr><td colspan=2>
+        <input type=submit name=login value="Log in">
+        <input type=submit name=cancel value="Cancel">
+    </table>
+    
+    <p>Don't have a password? If so, email me, and I'll send you one.
+    
+    </form>
+$else:
+    <p>You are logged in as <b>$username</b>.</p>
+
+    <form method="post" action="process-logout">
+    <input type=hidden name=goto value="$referrer">
+    <input type=submit name=logout value="Log out">
+    </form>

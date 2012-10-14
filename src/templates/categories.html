@@ -1,6 +1,7 @@
-$def with (rows)
+$def with (rows, username)
 
 $var title = "Categories"
+$var logged_in = username
 
 <table>
 $for (name, id, count) in rows:

@@ -1,6 +1,7 @@
-$def with (name, conf, pager, topic_id, sidebar = None, topbar = None)
+$def with (name, conf, pager, topic_id, username, sidebar = None, topbar = None)
 
 $var title = name
+$var logged_in = username
 
 $def paging():
     $if pager.get_page_count() > 1:

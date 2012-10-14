@@ -1,6 +1,7 @@
-$def with (counts, label, id, time, place, event, conf, title, desc, total)
+$def with (counts, label, id, time, place, event, conf, title, desc, total, username)
 
 $var title = title
+$var logged_in = bool(username)
 
 <div style="float: right">
   $label<br>

@@ -1,6 +1,7 @@
-$def with (id, title, time, event_id, event_name, place_id, place_name, desc, cats, people, prev, next, conf)
+$def with (id, title, time, event_id, event_name, place_id, place_name, desc, cats, people, prev, next, conf, username)
 
 $var title = title
+$var logged_in = username
 
 $if prev:
     <a href="photo.jsp?id=$prev"><img src="static/nav_prev.gif"></a>

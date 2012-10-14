@@ -1,6 +1,7 @@
-$def with (conf, query, results, typemap)
+$def with (conf, query, results, typemap, username)
 
 $var title = 'Search results'
+$var logged_in = username
 
 <form method=get action=search-result.jsp>
 <input name=search size=50 style="font-size: 140%" value="$query">

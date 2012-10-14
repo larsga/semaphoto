@@ -47,6 +47,9 @@ urls = (
     '/search-form\\.jsp', 'SearchPage',
     '/search-result\\.jsp', 'SearchResultsPage',
     '/best-photos\\.jsp', 'BestPhotosPage',
+    '/login,?(.+)?', 'LoginPage',
+    '/process-login', 'LoginAction',
+    '/process-logout', 'LogoutAction',
     )
 
 class StartPage:
@@ -89,10 +92,12 @@ class StartPage:
 
         total = q_get('select count(*) where { ?s a sp:Photo }')
 
+        username = current_user_name()
+        
         # do markdown conversion here
         desc = markdown2.markdown(desc.value)
         return render.startpage(counts, label, id, time, place, event, conf,
-                                title, desc, total)
+                                title, desc, total, username)
 
 class PeoplePage:
     def GET(self):
@@ -110,7 +115,8 @@ class PeoplePage:
             else:
                 letters.append((l, [(name, id, count)]))
             
-        return render.people(letters)
+        username = current_user_name()
+        return render.people(letters, username)
 
 class PersonPage:
     def GET(self):
@@ -118,7 +124,8 @@ class PersonPage:
         name = q_get('select ?name where { ?s sp:id "%s"; sp:name ?name }' %
                      person_id)
         f = '?i sp:depicts ?p. ?p sp:id "%s". ' % person_id
-        return render.photolist(name, conf, ListPager(f), person_id)
+        username = current_user_name()
+        return render.photolist(name, conf, ListPager(f), person_id, username)
 
 class PhotoPage:
     def GET(self):
@@ -194,9 +201,10 @@ class PhotoPage:
         """
         next = q_get(query % photo_id)
         
+        username = current_user_name()
         return render.photo(photo_id, title, time, event_id, event_name,
                             place_id, place_name, desc, cats, people,
-                            prev, next, conf)
+                            prev, next, conf, username)
 
 class EventsPage:
     def GET(self):
@@ -218,10 +226,11 @@ class EventsPage:
                 years[year] = events
             events.append((name, id, start, end, count))
 
+        username = current_user_name()
         years = years.items()
         years.sort()
         years.reverse()
-        return render.events(years)
+        return render.events(years, username)
 
 class EventPage:
     def GET(self):
@@ -229,7 +238,9 @@ class EventPage:
         name = q_get('select ?name where { ?s sp:id "%s"; sp:name ?name }' %
                      event_id)
         f = '?i sp:taken-during ?e. ?e sp:id "%s". ' % event_id
-        return render.photolist(name, conf, ListPager(f, "asc"), event_id)
+        username = current_user_name()
+        return render.photolist(name, conf, ListPager(f, "asc"), event_id,
+                                username)
 
 class CategoriesPage:
     def GET(self):
@@ -239,7 +250,8 @@ class CategoriesPage:
           ?p sp:id ?id.
           ?i sp:in-category ?p.
         } GROUP BY ?l ?id ORDER BY ?l"""
-        return render.categories(q(query))
+        username = current_user_name()
+        return render.categories(q(query), username)
 
 class CategoryPage:
     def GET(self):
@@ -247,7 +259,8 @@ class CategoryPage:
         name = q_get('select ?name where { ?s sp:id "%s"; sp:name ?name }' %
                      cat_id)
         f = '?i sp:in-category ?c. ?c sp:id "%s". ' % cat_id
-        return render.photolist(name, conf, ListPager(f), cat_id)
+        username = current_user_name()
+        return render.photolist(name, conf, ListPager(f), cat_id, username)
 
 class PlacesPage:
     def GET(self):
@@ -270,7 +283,8 @@ class PlacesPage:
         tree.sort()
        
         # 3. render
-        return render.places(tree)
+        username = current_user_name()
+        return render.places(tree, username)
 
 class PlacePage:
     def GET(self):
@@ -340,8 +354,9 @@ class PlacePage:
         else:
             topbar = None
             
-        return render.photolist(name, conf, ListPager(f), place_id, sidebar,
-                                topbar)
+        username = current_user_name()
+        return render.photolist(name, conf, ListPager(f), place_id, username,
+                                sidebar, topbar)
 
 class YearPage:
     def GET(self):
@@ -356,18 +371,20 @@ class YearPage:
           } order by ?month
         ''' % year
 
+        username = current_user_name()
         months = [month.value for (month,) in q(monthquery)]
         sidebar = lambda: side_render.month_side(months)
         return render.photolist(year, conf, ListPager(f, "asc", qe, "year"),
-                                year, sidebar)
+                                year, username, sidebar)
 
 class MonthPage:
     def GET(self):
+        username = current_user_name()
         month = web.input()["month"]
         f = 'FILTER(bif:starts_with(?time, "%s-"))' % month
         qe = '?i sp:time-taken ?time .'
         return render.photolist(month, conf, ListPager(f, "asc", qe, "month"),
-                                month)
+                                month, username)
 
 class MapPage:
     def GET(self):
@@ -383,11 +400,13 @@ class MapPage:
             }
           }
         '''
-        return render.mappage(conf, q(query))
+        username = current_user_name()
+        return render.mappage(conf, q(query), username)
 
 class SearchPage:
     def GET(self):
-        return render.search()
+        username = current_user_name()
+        return render.search(username)
     
 class SearchResultsPage:
     def GET(self):
@@ -419,7 +438,8 @@ select ?s1 as ?c1, ( bif:search_excerpt ( bif:vector ( %s ) , ?o1 ) ) as ?c2, ?t
   ''' % (token_list_for_search(search),
          tokenize_for_search(search))
         results = q(query)
-        return render.search_result(conf, search, results, typemap)
+        username = current_user_name()
+        return render.search_result(conf, search, results, typemap, username)
 
 def tokenize_for_search(search):
     return '( %s )' % ' AND '.join([t.upper() for t in search.split()])
@@ -429,7 +449,9 @@ def token_list_for_search(search):
 
 class BestPhotosPage:
     def GET(self):
-        return render.photolist('Best photos', conf, BestPager(), None)
+        username = current_user_name()
+        return render.photolist('Best photos', conf, BestPager(), None,
+                                username)
 
 class BestPager:
 
@@ -474,6 +496,42 @@ class BestPager:
         """ % (offset)
         return q(query)
 
+messagedict = {
+    None : None,
+    'failed' : 'Login failed.'
+    }
+    
+class LoginPage:
+    def GET(self, message):
+        nocache()
+        message = messagedict[message]
+        referrer = web.ctx.env.get('HTTP_REFERER', '')
+        return render.login(current_user_name(), referrer, message)
+
+class LoginAction:
+    def POST(self):
+        nocache()
+        username = web.input()['username']
+        password = q_get('''select ?pword where {
+          ?user <http://psi.ontopia.net/userman/username> "%s";
+            <http://psi.ontopia.net/userman/password> ?pword.
+        }''' % username)
+
+        if password.value != web.input()['password']:
+            web.seeother(web.ctx.homedomain + '/login,failed')
+            return
+
+        session.username = username
+        goto = web.input()['goto'] or (web.ctx.homedomain + '/')
+        web.seeother(goto)
+
+class LogoutAction:
+    def POST(self):
+        nocache()
+        session.username = None
+        goto = web.input()['goto'] or (web.ctx.homedomain + '/')
+        web.seeother(goto)
+        
 # --- MODEL
 
 class TreeModel:
@@ -620,6 +678,9 @@ class Configuration:
 
     def get_photo_graph(self):
         return 'http://psi.garshol.priv.no/semaphoto/graph'
+
+    def get_session_dir(self):
+        return "/Users/larsga/cvs-co/semaphoto/src/sessions"
     
 # --- UTILITIES
 
@@ -644,6 +705,17 @@ def count(type):
     result = q(query)
     return int(result[0][0].value)
 
+def current_user_name():
+    if not hasattr(session, "username"):
+        return None
+
+    return session.username
+
+def nocache():
+    web.header("Pragma", "no-cache");
+    web.header("Cache-Control", "no-cache, no-store, must-revalidate, post-check=0, pre-check=0");
+    web.header("Expires", "Tue, 25 Dec 1973 13:02:00 GMT");
+
 # --- CONSTANTS
 
 typemap = {
@@ -667,6 +739,11 @@ side_render = web.template.render(os.path.join(appdir, 'templates/'))
 
 app = web.application(urls, globals(), autoreload = False)
 #app.internalerror = Error
+
+web.config.session_parameters['cookie_path'] = '/'
+web.config.session_parameters['max_age'] = (24 * 60 * 60) * 30 # 30 days
+store = web.session.DiskStore(conf.get_session_dir())
+session = web.session.Session(app, store)
 
 if __name__ == "__main__":
     app.run()
