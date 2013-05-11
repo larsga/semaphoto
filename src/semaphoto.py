@@ -1,21 +1,23 @@
 
-import os
+import os, datetime
+import httplib, urlparse, urllib # for SPARQL Update
 import web
 import markdown2
 import sparql
 
 # TODO
-#  - install Virtuoso on Linux  
+#  - rating of photos
+#    - sorting of lists
+#  - comments (requires markup rendering)
+#  - privacy filtering
+#  - admin mode functions: delete etc
+#  - paging of search
 #
 #  - facet navigators
 #  - context sequence
 #  - Norwegian character problem -> Virtuoso bug, can't fix now
-
-#  - logging in
-#    - rating of photos
-#    - comments (requires markup rendering)
-#    - privacy filtering
-#    - admin mode functions: delete etc
+#  - install Virtuoso on Linux
+#  - try using Stardog instead
 
 # TODO AFTER CHANGEOVER
 #  - add config file, for loading location of images
@@ -26,8 +28,12 @@ import sparql
 #  - tagging?
 
 NS_SP = 'http://psi.garshol.priv.no/semaphoto/ont/'
-ENDPOINT = "http://localhost:8890/sparql"
-PREFIXES = 'PREFIX sp: <%s>' % NS_SP
+ENDPOINT = 'http://localhost:8890/sparql'
+PREFIXES = '''
+  PREFIX sp: <%s>
+  PREFIX um: <http://psi.ontopia.net/userman/>
+''' % NS_SP
+COMMENT_GRAPH = 'http://psi.garshol.priv.no/semaphoto/comments'
 
 urls = (
     '/', 'StartPage',
@@ -50,6 +56,7 @@ urls = (
     '/login,?(.+)?', 'LoginPage',
     '/process-login', 'LoginAction',
     '/process-logout', 'LogoutAction',
+    '/set-score', 'SetScoreAction',
     )
 
 class StartPage:
@@ -200,11 +207,34 @@ class PhotoPage:
         } order by asc(?time2) limit 1
         """
         next = q_get(query % photo_id)
-        
+
+        query = '''select ?score
+            where {
+              ?object sp:id "%s".
+              ?rating sp:object-rated ?object;
+                sp:rating ?score.
+            }'''
+        votes = [int(row[0].value) for row in q(query % photo_id)]
+
+        vote_count = len(votes)
+        score = average(votes)
+
         username = current_user_name()
+        uservote = q_get('''
+          select ?score
+          where {
+            ?object sp:id "%s".
+            ?user um:username "%s".
+            ?rating sp:object-rated ?object;
+              sp:rating ?score;
+              sp:rated-by ?user.
+          }
+        ''' % (photo_id, username or 'nobody')) or 0
+        
         return render.photo(photo_id, title, time, event_id, event_name,
                             place_id, place_name, desc, cats, people,
-                            prev, next, conf, username)
+                            prev, next, conf, username, vote_count, score,
+                            uservote)
 
 class EventsPage:
     def GET(self):
@@ -441,6 +471,27 @@ select ?s1 as ?c1, ( bif:search_excerpt ( bif:vector ( %s ) , ?o1 ) ) as ?c2, ?t
         username = current_user_name()
         return render.search_result(conf, search, results, typemap, username)
 
+class SetScoreAction:
+    def POST(self):
+        photoid = web.input().get('id')
+        rating = web.input().get('score')
+        now = datetime.datetime.now() # '2013-05-10 10:32:41.869758'
+        now = str(now).replace(' ', 'T')
+        username = current_user_name()
+        
+        upd = '''insert into graph <%s> {
+          _:r a sp:Rating;
+            sp:rating %s;
+            sp:rated-by ?person;
+            sp:time-rated "%s" ^^ xsd:datetime;
+            sp:object-rated ?object.
+        } where {
+          ?person um:username "%s".
+          ?object sp:id "%s".
+        }''' % (COMMENT_GRAPH, rating, now, username, photoid)
+        
+        do_update(upd)
+    
 def tokenize_for_search(search):
     return '( %s )' % ' AND '.join([t.upper() for t in search.split()])
 
@@ -671,7 +722,7 @@ class ListPager:
 class Configuration:
 
     def get_photo_uri(self):
-        return 'http://larsga.geirove.org/photoserv.fcgi?'
+        return 'http://larsga.webfactional.com/photoserv.py?'
 
     def get_gmaps_key(self):
         return None
@@ -689,9 +740,11 @@ def q(query):
 
 def q_get(query):
     row = sparql.query(ENDPOINT, PREFIXES + query).fetchone()
-    # FIXME: need to handle no values, somehow
-    (a, ) = row
-    return a[0]
+    try:
+        (a, ) = row
+        return a[0]
+    except ValueError: # means we got no results
+        return None
 
 def q_row(query):
     rows = sparql.query(ENDPOINT, PREFIXES + query).fetchall()
@@ -705,6 +758,26 @@ def count(type):
     result = q(query)
     return int(result[0][0].value)
 
+def do_update(update):
+    url = urlparse.urlparse(ENDPOINT)
+    port = 80
+    if ':' in url.netloc:
+        (host, port) = url.netloc.split(':')
+        port = int(port)
+    else:
+        host = url.netloc
+
+    body = 'query=' + urllib.quote(PREFIXES + update)
+    headers = {'Content-type' : 'application/x-www-form-urlencoded; charset=utf-8'}
+
+    conn = httplib.HTTPConnection(host, port)
+    conn.request('POST', url.path, body, headers)
+    resp = conn.getresponse()
+
+    if resp.status > 299:
+        print update
+        raise Exception('Error %s: %s' % (resp.status, resp.reason))
+
 def current_user_name():
     if not hasattr(session, "username"):
         return None
@@ -716,6 +789,9 @@ def nocache():
     web.header("Cache-Control", "no-cache, no-store, must-revalidate, post-check=0, pre-check=0");
     web.header("Expires", "Tue, 25 Dec 1973 13:02:00 GMT");
 
+def average(numbers):
+    return sum(numbers) / float(len(numbers))
+    
 # --- CONSTANTS
 
 typemap = {

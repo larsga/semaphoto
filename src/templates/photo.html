@@ -1,4 +1,4 @@
-$def with (id, title, time, event_id, event_name, place_id, place_name, desc, cats, people, prev, next, conf, username)
+$def with (id, title, time, event_id, event_name, place_id, place_name, desc, cats, people, prev, next, conf, username, vote_count, score, uservote)
 
 $var title = title
 $var logged_in = username
@@ -24,7 +24,42 @@ $if event_id:
 </script>
 
 <a href="javascript:openInfo('$id')"><img src="static/info.gif" border=0></a>
+<br>
+
+<script>
+var votes = $vote_count;
+var average = $score;
+var userscore = $uservote;
+var photoid = "$id";
+</script>
+  
+<span title="Average vote, out of $vote_count votes is $score.">
+  <img id=avgstar0 src="static/gray-star.png">
+  <img id=avgstar1 src="static/gray-star.png">
+  <img id=avgstar2 src="static/gray-star.png">
+  <img id=avgstar3 src="static/gray-star.png">
+  <img id=avgstar4 src="static/gray-star.png">
+</span>
     
+&nbsp;&nbsp;&nbsp;
+<span title="Please record your vote. 1 star is bad, 3 is average, 5 is really good">
+<form method=post action="set-score" style="display: inline"
+      name=voteform>
+<input type=hidden name=id value="$id">
+<input type=hidden name=score value="" id=score>
+<img id="star1" src="static/white-star.png"
+     onmouseover="moveonto(1)" onmouseout="moveoff(1)" onclick="vote(1)">
+<img id="star2" src="static/white-star.png"
+     onmouseover="moveonto(2)" onmouseout="moveoff(2)" onclick="vote(2)">
+<img id="star3" src="static/white-star.png"
+     onmouseover="moveonto(3)" onmouseout="moveoff(3)" onclick="vote(3)">
+<img id="star4" src="static/white-star.png"
+     onmouseover="moveonto(4)" onmouseout="moveoff(4)" onclick="vote(4)">
+<img id="star5" src="static/white-star.png"
+     onmouseover="moveonto(5)" onmouseout="moveoff(5)" onclick="vote(5)">
+</form>
+</span>
+
 <p><img src="$conf.get_photo_uri()$id"></p>
 
 $if desc:
@@ -41,3 +76,8 @@ $if people:
     $for (person_id, person_name) in people:
         <li><a href="person.jsp?id=$person_id">$person_name</a>
     </ul>
+
+<script>
+set_average_stars(average);
+moveoff(userscore);
+</script>
