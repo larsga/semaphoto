@@ -1,4 +1,4 @@
-$def with (id, title, time, event_id, event_name, place_id, place_name, desc, cats, people, prev, next, conf, username, vote_count, score, uservote)
+$def with (id, title, time, event_id, event_name, place_id, place_name, desc, cats, people, prev, next, conf, username, vote_count, score, uservote, comments)
 
 $var title = title
 $var logged_in = username
@@ -81,3 +81,62 @@ $if people:
 set_average_stars(average);
 moveoff(userscore);
 </script>
+
+<div id=fcomment class=visible>
+<h2>Comments ($(len(comments)))</h2>
+
+$if not comments:
+    <p>No comments yet.
+$else:
+    $for c in comments:
+        <p><b>$:c.get_formatted_name()</b>
+        - $c.get_nice_time()
+        $#FIXME: add support for deleting comments
+        $#<a href="delete-comment.jsp?id=429"
+        $#onclick="return confirmDelete('comment')"
+        $#><img src="static/remove.gif"></a>
+        </p>
+        <blockquote>
+        <p>$:c.get_formatted_content()</p>
+        </blockquote>
+
+
+<h2>Add comment</h2>
+<form action="add-comment" method="post">
+<input type=hidden name=id value="$id">
+<table>
+
+$if username:
+    <tr><th width="20%">Username <td>$username
+$else:
+    <tr><th width="20%">Name <td><input name=name size=40 value="">
+    <tr><th width="20%">Email <td><input name=email size=40 value="">
+       (optional, not published)
+    <tr><th width="20%">URL <td><input name=url size=60 value=""> (optional)
+    <tr id=spam style="display: normal"
+       ><td><span title="As in, 'is this comment spam?'">Spam</span>    
+    <td><input type=checkbox name=clever checked>
+    <span class=hint><b>don't</b> check this if you want to be posted</span>
+    <tr id=spam2 style="display: normal"
+    ><td><span title="As in, 'please confirm that this is not comment
+    spam'">Not spam</span>    
+    <td><input type=checkbox name=clever2>
+    <span class=hint><b>do</b> check this if you want to be posted</span>
+          
+<tr><td colspan=2><a name="comment"></a>
+<textarea name=comment cols=60 rows=10 
+  ></textarea><br>
+<input type=submit value="Add"     name=add> 
+<input type=submit value="Preview" name=preview>
+<a href="markdown.jsp" target="blank">formatting help</a>
+</table>
+</form>
+</div>
+
+$if not username:
+    <script type="text/javascript">
+    document.forms[1].clever.checked = false;
+    document.forms[1].clever2.checked = true;
+    document.getElementById("spam").style.display = "none";
+    document.getElementById("spam2").style.display = "none";
+    </script>

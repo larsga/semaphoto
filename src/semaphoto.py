@@ -6,9 +6,6 @@ import markdown2
 import sparql
 
 # TODO
-#  - rating of photos
-#    - sorting of lists
-#  - comments (requires markup rendering)
 #  - privacy filtering
 #  - admin mode functions: delete etc
 #  - paging of search
@@ -57,6 +54,7 @@ urls = (
     '/process-login', 'LoginAction',
     '/process-logout', 'LogoutAction',
     '/set-score', 'SetScoreAction',
+    '/add-comment', 'AddCommentAction',
     )
 
 class StartPage:
@@ -230,11 +228,31 @@ class PhotoPage:
               sp:rated-by ?user.
           }
         ''' % (photo_id, username or 'nobody')) or 0
+
+        query = '''
+            select ?content ?time ?name ?pid ?url
+            where {
+             ?object sp:id "%s".
+             ?c a sp:Comment;
+               sp:content ?content;
+               sp:time-commented ?time;
+               sp:comment-on ?object.
+              {
+               ?c sp:commented-by ?person.
+               ?person sp:name ?name;
+                 sp:id ?pid. }
+              UNION {
+                ?c sp:commenter-name ?name.
+                OPTIONAL { ?c sp:commenter-url ?url }
+              }
+            } order by asc(?time)''' % photo_id
+        comments = [Comment(content, t, name, pid, url) for
+                    (content, t, name, pid, url) in q(query)]
         
         return render.photo(photo_id, title, time, event_id, event_name,
                             place_id, place_name, desc, cats, people,
                             prev, next, conf, username, vote_count, score,
-                            uservote)
+                            uservote, comments)
 
 class EventsPage:
     def GET(self):
@@ -471,19 +489,54 @@ select ?s1 as ?c1, ( bif:search_excerpt ( bif:vector ( %s ) , ?o1 ) ) as ?c2, ?t
         username = current_user_name()
         return render.search_result(conf, search, results, typemap, username)
 
+messagedict = {
+    None : None,
+    'failed' : 'Login failed.'
+    }
+    
+class LoginPage:
+    def GET(self, message):
+        nocache()
+        message = messagedict[message]
+        referrer = web.ctx.env.get('HTTP_REFERER', '')
+        return render.login(current_user_name(), referrer, message)
+
+class LoginAction:
+    def POST(self):
+        nocache()
+        username = web.input()['username']
+        password = q_get('''select ?pword where {
+          ?user <http://psi.ontopia.net/userman/username> "%s";
+            <http://psi.ontopia.net/userman/password> ?pword.
+        }''' % username)
+
+        if password.value != web.input()['password']:
+            web.seeother(web.ctx.homedomain + '/login,failed')
+            return
+
+        session.username = username
+        goto = web.input()['goto'] or (web.ctx.homedomain + '/')
+        web.seeother(goto)
+
+class LogoutAction:
+    def POST(self):
+        nocache()
+        session.username = None
+        goto = web.input()['goto'] or (web.ctx.homedomain + '/')
+        web.seeother(goto)
+
 class SetScoreAction:
     def POST(self):
         photoid = web.input().get('id')
-        rating = web.input().get('score')
-        now = datetime.datetime.now() # '2013-05-10 10:32:41.869758'
-        now = str(now).replace(' ', 'T')
+        rating = int(web.input().get('score'))
+        now = get_datetime_now()
         username = current_user_name()
         
         upd = '''insert into graph <%s> {
           _:r a sp:Rating;
             sp:rating %s;
             sp:rated-by ?person;
-            sp:time-rated "%s" ^^ xsd:datetime;
+            sp:time-rated "%s" ^^ xsd:dateTime;
             sp:object-rated ?object.
         } where {
           ?person um:username "%s".
@@ -491,7 +544,60 @@ class SetScoreAction:
         }''' % (COMMENT_GRAPH, rating, now, username, photoid)
         
         do_update(upd)
-    
+
+class AddCommentAction:
+    def POST(self):
+        photoid = web.input().get('id')
+        content = web.input().get('comment')
+        if not content:
+            return '<p>No actual comment.</p>'
+        
+        now = get_datetime_now()
+        username = current_user_name()
+        if username:
+            # ok, we know the user, so this is easy
+            upd = '''insert into graph <%s> {
+              _:c a sp:Comment;
+                sp:content "%s";
+                sp:commented-by ?person;
+                sp:time-commented "%s" ^^ xsd:dateTime;
+                sp:comment-on ?object.
+            } where {
+              ?person um:username "%s".
+              ?object sp:id "%s".
+            }''' % (COMMENT_GRAPH, escape(content), now, username, photoid)
+
+        else:
+            # we don't know the user, so things get a bit more involved
+            if web.input().get('clever') or not web.input().get('clever2'):
+                return '<p>Spam rejected.</p>'
+            name = web.input().get('name')
+            if not name:
+                return '<p>You have to specify a name.</p>'
+            
+            email = web.input().get('email')
+            if email:
+                email = '; sp:commenter-email "%s"' % email
+            url = web.input().get('url')
+            if url:
+                url = '; sp:commenter-url "%s"' % url
+
+            upd = '''insert into graph <%s> {
+              _:c a sp:Comment;
+                sp:content "%s";
+                sp:commenter-name "%s";
+                sp:time-commented "%s" ^^ xsd:dateTime;
+                sp:comment-on ?object
+                %s
+                %s.
+            } where {
+              ?object sp:id "%s".
+            }''' % (COMMENT_GRAPH, escape(content), escape(name), now,
+                    escape(url), escape(email), photoid)
+            
+        do_update(upd)
+        web.seeother(web.ctx.homedomain + '/photo.jsp?id=' + photoid)
+        
 def tokenize_for_search(search):
     return '( %s )' % ' AND '.join([t.upper() for t in search.split()])
 
@@ -546,42 +652,6 @@ class BestPager:
           LIMIT 50 OFFSET %s
         """ % (offset)
         return q(query)
-
-messagedict = {
-    None : None,
-    'failed' : 'Login failed.'
-    }
-    
-class LoginPage:
-    def GET(self, message):
-        nocache()
-        message = messagedict[message]
-        referrer = web.ctx.env.get('HTTP_REFERER', '')
-        return render.login(current_user_name(), referrer, message)
-
-class LoginAction:
-    def POST(self):
-        nocache()
-        username = web.input()['username']
-        password = q_get('''select ?pword where {
-          ?user <http://psi.ontopia.net/userman/username> "%s";
-            <http://psi.ontopia.net/userman/password> ?pword.
-        }''' % username)
-
-        if password.value != web.input()['password']:
-            web.seeother(web.ctx.homedomain + '/login,failed')
-            return
-
-        session.username = username
-        goto = web.input()['goto'] or (web.ctx.homedomain + '/')
-        web.seeother(goto)
-
-class LogoutAction:
-    def POST(self):
-        nocache()
-        session.username = None
-        goto = web.input()['goto'] or (web.ctx.homedomain + '/')
-        web.seeother(goto)
         
 # --- MODEL
 
@@ -732,9 +802,42 @@ class Configuration:
 
     def get_session_dir(self):
         return "/Users/larsga/cvs-co/semaphoto/src/sessions"
+
+class Comment:
+    def __init__(self, content, time, name, pid, url):
+        self.content = unpack(content)
+        self.time = unpack(time)
+        self.name = unpack(name)
+        self.pid = unpack(pid)
+        self.url = unpack(url)
+
+    def get_formatted_name(self):
+        if self.pid:
+            return '<a href="person.jsp?id=%s">%s</a>' % (self.pid, self.name)
+        elif self.url:
+            return '<a href="%s">%s</a>' % (self.url, self.name)
+        else:
+            return self.name
+        
+    def get_formatted_content(self):
+        return markdown2.markdown(self.content)
+
+    def get_nice_time(self):
+        t = self.time.replace('T', ' ')
+        pos = t.find('.')
+        t = t[ : pos]
+        return t
     
 # --- UTILITIES
 
+def escape(value): # SPARQL escape
+    return value.replace('"', '\\"')
+
+def unpack(literal):
+    if not literal:
+        return literal
+    return literal.value
+    
 def q(query):
     return sparql.query(ENDPOINT, PREFIXES + query).fetchall()
 
@@ -767,6 +870,8 @@ def do_update(update):
     else:
         host = url.netloc
 
+    if type(update) == unicode:
+        update = update.encode('utf-8')
     body = 'query=' + urllib.quote(PREFIXES + update)
     headers = {'Content-type' : 'application/x-www-form-urlencoded; charset=utf-8'}
 
@@ -778,6 +883,10 @@ def do_update(update):
         print update
         raise Exception('Error %s: %s' % (resp.status, resp.reason))
 
+def get_datetime_now():
+    now = datetime.datetime.now() # '2013-05-10 10:32:41.869758'
+    return str(now).replace(' ', 'T')
+    
 def current_user_name():
     if not hasattr(session, "username"):
         return None
@@ -790,6 +899,8 @@ def nocache():
     web.header("Expires", "Tue, 25 Dec 1973 13:02:00 GMT");
 
 def average(numbers):
+    if not numbers:
+        return 0.0
     return sum(numbers) / float(len(numbers))
     
 # --- CONSTANTS

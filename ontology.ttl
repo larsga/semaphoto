@@ -175,3 +175,50 @@ sp:object-rated a owl:DatatypeProperty;
   rdfs:label "Object rated";
   rdfs:domain sp:Rating;
   rdfs:range sp:Image.
+
+# ----- COMMENT
+
+sp:Comment a owl:Class;
+  rdfs:label "Comment";
+  owl:disjointWith sp:Image;
+  owl:disjointWith sp:Place;
+  owl:disjointWith sp:Person;
+  owl:disjointWith sp:Event;
+  owl:disjointWith sp:Category;
+  owl:disjointWith sp:Rating.
+
+sp:content a owl:DatatypeProperty;
+  rdfs:label "Content";
+  rdfs:domain sp:Comment;
+  rdfs:range xsd:string.
+
+sp:time-commented a owl:DatatypeProperty;
+  rdfs:label "Time commented";
+  rdfs:domain sp:Comment;
+  rdfs:range xsd:dateTime.
+
+sp:commented-by a owl:ObjectProperty;
+  rdfs:label "Commented by";
+  rdfs:domain sp:Comment;
+  rdfs:range sp:Person.
+
+sp:comment-on a owl:ObjectProperty;
+  rdfs:label "Comment on";
+  rdfs:domain sp:Comment;
+  rdfs:range sp:Image.
+
+sp:commenter-name a owl:DatatypeProperty;
+  rdfs:label "Commenter's name";
+  rdfs:domain sp:Comment;
+  rdfs:range xsd:string.
+
+sp:commenter-url a owl:DatatypeProperty;
+  rdfs:label "Commenter's URL";
+  rdfs:domain sp:Comment;
+  rdfs:range xsd:string.
+  
+sp:commenter-email a owl:DatatypeProperty;
+  rdfs:label "Commenter's email";
+  rdfs:domain sp:Comment;
+  rdfs:range xsd:string.
+  
