@@ -4,17 +4,15 @@ import web
 import markdown2
 import photolib
 
-# REIMPLEMENT
+# NOW
 #  - order by score
-#  - paging of search
-#  - place children
 #  - admin mode functions: delete etc
 #  - facet navigators
 #  - context sequence
 
 #  - script for upload
 
-# TODO AFTER CHANGEOVER
+# LATER
 #  - add config file, for loading location of images
 #  - layout of photo page
 #  - videos
@@ -22,6 +20,7 @@ import photolib
 #  - fullscreen mode
 #  - tagging?
 #  - ipad mode
+#  - paging of search
 
 urls = (
     '/', 'StartPage',
@@ -149,7 +148,7 @@ class PlacePage:
 
         places = photolib.worm.get_extent(photolib.Place)
         sidebar = lambda: side_render.place_side(conf, place, places)
-        topbar = lambda: side_render.place_top(place.get_ancestors())
+        topbar = lambda: side_render.place_top(place)
         return render.photolist(conf, place, username, sidebar, topbar)
 
 class YearPage:

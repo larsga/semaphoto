@@ -1,10 +1,20 @@
-$def with (ancestors)
+$def with (place)
 
+$ ancestors = place.get_ancestors()
 $if ancestors:
-  <p>
+  <p>$place.get_name() is in
   $for ix in range(len(ancestors)):
       <a href="place.jsp?id=$ancestors[ix].get_id()"
          >$ancestors[ix].get_name()</a>
       $if ix + 1 < len(ancestors):
           |    
   </p>
+
+$ children = place.get_children()
+$if children:
+  <p>Places in $place.get_name()</p>
+
+  <ul>
+  $for child in children:
+    <li><a href="place.jsp?id=$child.get_id()">$child.get_name()
+  </ul>
