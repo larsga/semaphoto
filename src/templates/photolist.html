@@ -1,23 +1,24 @@
-$def with (name, conf, pager, topic_id, username, sidebar = None, topbar = None)
+$def with (conf, object, username, sidebar = None, topbar = None)
 
-$var title = name
+$var title = object.get_name()
 $var logged_in = username
+$ pager = object.get_pager()
 
 $def paging():
     $if pager.get_page_count() > 1:
          <p>
          $if pager.get_page_no() > 1:
-             <a href="$pager.get_page_no_params(topic_id, pager.get_page_no(-1))"
+             <a href="$pager.get_page_no_params(object.get_id(), pager.get_page_no(-1))"
                ><img src="/static/nav_prev.gif" alt="prev"></a>
            
          $for pno in range(1, pager.get_page_count() + 1):
              $if pager.get_page_no() == pno:
                  <b>$pno</b>
              $else:
-                 <a href="$pager.get_page_no_params(topic_id, pno)">$pno</a>
+                 <a href="$pager.get_page_no_params(object.get_id(), pno)">$pno</a>
 
          $if pager.get_page_no() < pager.get_page_count():
-             <a href="$pager.get_page_no_params(topic_id, pager.get_page_no(1))"
+             <a href="$pager.get_page_no_params(object.get_id(), pager.get_page_no(1))"
                ><img src="/static/nav_next.gif" alt="next"></a>
          </p>
 
@@ -31,23 +32,19 @@ $if pager.can_be_chronological():
     <p>Sort by:
     $if pager.get_sort_by() == 'time':
         <b>Time</b> |
-        <a href="$pager.get_page_no_params(topic_id)&sort=score">Score</a></p>
+        <a href="$pager.get_page_no_params(object.get_id())&sort=score">Score</a></p>
     $else:
-        <a href="$pager.get_page_no_params(topic_id)">Time</a> |
+        <a href="$pager.get_page_no_params(object.get_id())">Time</a> |
         <b>Score</b></p>
          
 $:paging()
 
 <table>
-$ fourth = ''
-$for row in pager.get_photos():
-    $ (id, title, time) = row[ : 3]
-    $if len(row) > 3:
-        $ fourth = row[3]
-    <tr><td><a href="photo.jsp?id=$id"
-    ><img src="$conf.get_photo_uri()$id;thumb"></a>
-        <td style="font-size: 75%">$title<br>
-            $time<br>$fourth
+$for photo in pager.get_photos():
+    <tr><td><a href="photo.jsp?id=$photo.get_id()"
+    ><img src="$conf.get_photo_uri()$photo.get_id();thumb"></a>
+        <td style="font-size: 75%">$photo.get_title()<br>
+            $photo.get_time_taken()<br>$photo.get_taken_at().get_name()
   
 </table>
 

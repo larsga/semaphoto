@@ -1,9 +1,10 @@
 $def with (ancestors)
 
-<p>
-$for ix in range(len(ancestors)):
-    $ (pid, label) = ancestors[ix]
-    <a href="place.jsp?id=$pid">$label</a>
-    $if ix + 1 < len(ancestors):
-        |    
-</p>
+$if ancestors:
+  <p>
+  $for ix in range(len(ancestors)):
+      <a href="place.jsp?id=$ancestors[ix].get_id()"
+         >$ancestors[ix].get_name()</a>
+      $if ix + 1 < len(ancestors):
+          |    
+  </p>

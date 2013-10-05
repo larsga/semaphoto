@@ -1,28 +1,36 @@
-$def with (counts, label, id, time, place, event, conf, title, desc, total, username)
+$def with (conf, gallery, desc, username)
 
-$var title = title
+$var title = gallery.get_title()
 $var logged_in = bool(username)
-
-<div style="float: right">
-  $label<br>
-  <a href="photo.jsp?id=$id"><img src="$conf.get_photo_uri()$id;thumb"></a>
-  <div style="font-size: 75%">
-    <br>$time<br>
-    $if place:
-      <a href="place.jsp?id=$place[0]">$place[1]</a><br>
-    $if event:
-      <a href="event.jsp?id=$event[0]">$event[1]</a>
-  </div>
-</div>
+$ photo = gallery.get_random_photo()
 
 $:desc
+
+<div style="float: right">
+  $photo.get_title()<br>
+  <a href="photo.jsp?id=$photo.get_id()"
+     ><img src="$conf.get_photo_uri()$photo.get_id();thumb"></a>
+  <div style="font-size: 75%">
+    <br>$photo.get_time_taken()<br>
+    
+    $ place = photo.get_taken_at()
+    $if place:
+      <a href="place.jsp?id=$place.get_id()">$place.get_name()</a><br>
+
+    $ event = photo.get_taken_during()
+    $if event:
+      <a href="event.jsp?id=$event.get_id()">$event.get_name()</a>
+  </div>
+</div>
 
 <p>You can access the photos through lists of:</p>
 
 <table>
-$for (type, count, link) in counts:
-    <tr><td><a href="$link">$type</a> <td>$count
+<tr><td><a href="people.jsp">People</a> <td>$gallery.count('person')
+<tr><td><a href="places.jsp">Places</a> <td>$gallery.count('place')
+<tr><td><a href="events.jsp">Events</a> <td>$gallery.count('event')
+<tr><td><a href="categories.jsp">Categories</a> <td>$gallery.count('category')
 <tr><td><a href="best-photos.jsp">The best photos</a> <td>
 </table>
 
-<p>There are $total photos in the system altogether.</p>
+<p>There are $gallery.count('photo') photos in the system altogether.</p>

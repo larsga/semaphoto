@@ -12,8 +12,8 @@ $for (letter, people) in letters:
 $for (letter, people) in letters:
     <tr><td colspan=2><p><h2><a name="$letter">$letter</a></h2>
 
-    $for (name, id, count) in people:
-          <tr><td><a href="person.jsp?id=$id"
-              >$name</a>&nbsp;&nbsp;&nbsp; <td>$count
+    $for (person, count) in people:
+          <tr><td><a href="person.jsp?id=$person.get_id()"
+              >$person.get_name()</a>&nbsp;&nbsp;&nbsp; <td>$count
   
 </table>

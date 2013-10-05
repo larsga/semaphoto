@@ -12,10 +12,11 @@ $for (year, events) in years:
 $for (year, events) in years:
     <tr><td colspan=4><p><h2><a name="$year"><a href="year.jsp?year=$year">$year</a></a></h2>
 
-    $for (name, id, start, end, count) in events:
-          <tr><td><a href="event.jsp?id=$id">$name</a> &nbsp;&nbsp;&nbsp;
-              <td>$start &nbsp;&nbsp;&nbsp;
-              <td>$end &nbsp;&nbsp;&nbsp;
+    $for (event, count) in events:
+          <tr><td><a href="event.jsp?id=$event.get_id()"
+                     >$event.get_name()</a> &nbsp;&nbsp;&nbsp;
+              <td>$event.get_start_date() &nbsp;&nbsp;&nbsp;
+              <td>$event.get_end_date() &nbsp;&nbsp;&nbsp;
               <td>$count &nbsp;&nbsp;&nbsp;
   
 </table>

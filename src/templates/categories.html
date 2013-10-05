@@ -1,11 +1,12 @@
-$def with (rows, username)
+$def with (cats, username)
 
 $var title = "Categories"
 $var logged_in = username
 
 <table>
-$for (name, id, count) in rows:
-     <tr><td><a href="category.jsp?id=$id">$name</a>&nbsp;&nbsp;&nbsp;
+$for (cat, count) in cats:
+     <tr><td><a href="category.jsp?id=$cat.get_id()">$cat.get_name()</a>
+         &nbsp;&nbsp;&nbsp;
          <td>$count
   
 </table>

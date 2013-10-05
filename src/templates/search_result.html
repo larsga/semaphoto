@@ -1,4 +1,4 @@
-$def with (conf, query, results, typemap, username)
+$def with (conf, query, results, username)
 
 $var title = 'Search results'
 $var logged_in = username
@@ -9,12 +9,10 @@ $var logged_in = username
 </form>
 
 <table>
-$for (c1, c2, type, id) in results:
+$for photo in results:
     <tr>
-    $if type.value == 'http://psi.garshol.priv.no/semaphoto/ont/Photo':
-        <td><a href="photo.jsp?id=$id"
-              ><img src="$conf.get_photo_uri()$id;thumb"></a>
-    $else:
-        <td><a href="$typemap[type.value]?id=$id">Link</a>
-    <td>$:c2
+      <td><a href="photo.jsp?id=$photo.get_id()"
+            ><img src="$conf.get_photo_uri()$photo.get_id();thumb"></a>
+    <td><b>$photo.get_title()</b><br>
+        $photo.get_time_taken()
 </table>

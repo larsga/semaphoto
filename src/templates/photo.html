@@ -1,39 +1,44 @@
-$def with (id, title, time, event_id, event_name, place_id, place_name, desc, cats, people, prev, next, conf, username, vote_count, score, uservote, comments)
+$def with (conf, photo, username)
 
-$var title = title
+$var title = photo.get_title()
 $var logged_in = username
 
+$ prev = photo.get_previous()
 $if prev:
-    <a href="photo.jsp?id=$prev"><img src="static/nav_prev.gif"></a>
+    <a href="photo.jsp?id=$prev.get_id()"><img src="static/nav_prev.gif"></a>
+$ next = photo.get_next()
 $if next:
-    <a href="photo.jsp?id=$next"><img src="static/nav_next.gif"></a>
+    <a href="photo.jsp?id=$next.get_id()"><img src="static/nav_next.gif"></a>
 
-$if place_id:
-    <a href="place.jsp?id=$place_id">$place_name</a>
-    $if event_id:
+$ place = photo.get_taken_at()
+$ event = photo.get_taken_during()    
+$if place:
+    <a href="place.jsp?id=$place.get_id()">$place.get_name()</a>
+    $if event:
         &mdash;
-$if event_id:
-    <a href="event.jsp?id=$event_id">$event_name</a>
-&mdash; $time
+$if event:
+    <a href="event.jsp?id=$event.get_id()">$event.get_name()</a>
+&mdash; $photo.get_time_taken()
 
 <script>
   function openInfo(photoid) {
-    window.open("$conf.get_photo_uri()$id;metadata",
+    window.open("$conf.get_photo_uri()$photo.get_id();metadata",
       "infoWindow","menubar=0,resizable=0,width=450,height=500,scrollbars=1");
   }
 </script>
 
-<a href="javascript:openInfo('$id')"><img src="static/info.gif" border=0></a>
+<a href="javascript:openInfo('$photo.get_id()')"><img src="static/info.gif" border=0></a>
 <br>
 
 <script>
-var votes = $vote_count;
-var average = $score;
-var userscore = $uservote;
-var photoid = "$id";
+var votes = $photo.get_vote_count();
+var average = $photo.get_score();
+var userscore = $photo.get_users_vote(username);
+var photoid = "$photo.get_id()";
 </script>
   
-<span title="Average vote, out of $vote_count votes is $score.">
+<span title="Average vote, out of $photo.get_vote_count() votes is
+             $photo.get_score().">
   <img id=avgstar0 src="static/gray-star.png">
   <img id=avgstar1 src="static/gray-star.png">
   <img id=avgstar2 src="static/gray-star.png">
@@ -45,7 +50,7 @@ var photoid = "$id";
 <span title="Please record your vote. 1 star is bad, 3 is average, 5 is really good">
 <form method=post action="set-score" style="display: inline"
       name=voteform>
-<input type=hidden name=id value="$id">
+<input type=hidden name=id value="$photo.get_id()">
 <input type=hidden name=score value="" id=score>
 <img id="star1" src="static/white-star.png"
      onmouseover="moveonto(1)" onmouseout="moveoff(1)" onclick="vote(1)">
@@ -60,21 +65,23 @@ var photoid = "$id";
 </form>
 </span>
 
-<p><img src="$conf.get_photo_uri()$id"></p>
+<p><img src="$conf.get_photo_uri()$photo.get_id()"></p>
 
-$if desc:
-    <p>$desc</p>
+$if photo.get_description():
+    <p>$photo.get_description()</p>
 
+$ cats = photo.get_categories()
 $if cats:
     <ul>
-    $for (cat_id, cat_name) in cats:
-        <li><a href="category.jsp?id=$cat_id">$cat_name</a>
+    $for cat in cats:
+        <li><a href="category.jsp?id=$cat.get_id()">$cat.get_name()</a>
     </ul>
 
+$ people = photo.get_people()
 $if people:
     <ul>
-    $for (person_id, person_name) in people:
-        <li><a href="person.jsp?id=$person_id">$person_name</a>
+    $for person in people:
+        <li><a href="person.jsp?id=$person.get_id()">$person.get_name()</a>
     </ul>
 
 <script>
@@ -82,6 +89,7 @@ set_average_stars(average);
 moveoff(userscore);
 </script>
 
+$ comments = photo.get_comments()
 <div id=fcomment class=visible>
 <h2>Comments ($(len(comments)))</h2>
 
@@ -92,7 +100,7 @@ $else:
         <p><b>$:c.get_formatted_name()</b>
         - $c.get_nice_time()
         $#FIXME: add support for deleting comments
-        $#<a href="delete-comment.jsp?id=429"
+        $#<a href="delete-comment.jsp?id=c.get_id()"
         $#onclick="return confirmDelete('comment')"
         $#><img src="static/remove.gif"></a>
         </p>
@@ -103,7 +111,7 @@ $else:
 
 <h2>Add comment</h2>
 <form action="add-comment" method="post">
-<input type=hidden name=id value="$id">
+<input type=hidden name=id value="$photo.get_id()">
 <table>
 
 $if username:
