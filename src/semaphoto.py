@@ -128,14 +128,14 @@ class PlacesPage:
         where = None
         if not username:
             where = 'not hidden'
-        
+
         # 1. build tree model
         tree = TreeModel()
         for place in photolib.worm.get_extent(photolib.Place, where):
             pid = place.get_parent() and place.get_parent().get_id()
             tree.add_node(pid, place.get_id(), place.get_name())
         tree.sort()
-       
+
         # 2. render
         return render.places(tree, username)
 
@@ -179,19 +179,19 @@ class SearchPage:
     def GET(self):
         username = current_user_name()
         return render.search(username)
-    
+
 class SearchResultsPage:
     def GET(self):
         search = web.input()["search"]
         username = current_user_name()
         photos = gallery.get_search_results(search, username == None)
         return render.search_result(conf, search, photos, username)
-    
+
 messagedict = {
     None : None,
     'failed' : 'Login failed.'
     }
-    
+
 class LoginPage:
     def GET(self, message):
         nocache()
@@ -236,7 +236,7 @@ class AddCommentAction:
         content = web.input().get('comment')
         if not content:
             return '<p>No actual comment.</p>'
-        
+
         comment = photolib.Comment(None)
         comment.set_photo(photoid)
         comment.set_content(content)
@@ -253,12 +253,12 @@ class AddCommentAction:
             name = web.input().get('name')
             if not name:
                 return '<p>You have to specify a name.</p>'
-            
+
             comment.set_email(web.input().get('email'))
             comment.set_url(web.input().get('url'))
             comment.set_name(name)
             comment.set_username('nobody')
-            
+
         comment.create()
         photolib.conn.commit()
         web.seeother(web.ctx.homedomain + '/photo.jsp?id=' + photoid)
@@ -267,7 +267,7 @@ class BestPhotosPage:
     def GET(self):
         username = current_user_name()
         return render.photolist(conf, BestPager(username == None), username)
-        
+
 # --- MODEL
 
 class TreeModel:
@@ -278,7 +278,7 @@ class TreeModel:
 
     def get_roots(self):
         return self._roots
-        
+
     def add_node(self, parent, id, label):
         pnode = self._id_to_node.get(parent)
         if parent and not pnode:
@@ -309,7 +309,7 @@ class TreeModel:
         self._roots.sort()
         for node in self._roots:
             node.sort()
-                
+
 class TreeNode:
 
     def __init__(self, parent, id, label = None):
@@ -367,14 +367,14 @@ class Pager:
 
     def get_id(self):
         return None
-    
+
 class BestPager(Pager):
 
     def __init__(self, filter = False):
         Pager.__init__(self)
         self._filter = filter
         self._count = gallery.get_voted_photos(filter)
-    
+
     # --- container object implementation
 
     def get_name(self):
@@ -382,9 +382,9 @@ class BestPager(Pager):
 
     def get_pager(self):
         return self # we cheat a little bit
-        
+
     # --- pager implementation
-        
+
     def can_be_chronological(self):
         return False # sorting by time makes no sense here
 
@@ -399,7 +399,7 @@ class BestPager(Pager):
 
     def get_photos(self):
         return gallery.get_best_photos(self.get_offset(), self._filter)
-    
+
 class ListPager(Pager):
 
     def __init__(self, obj, sortdir = "desc", count_extra = '', idparam = 'id'):
@@ -409,7 +409,7 @@ class ListPager(Pager):
         self._idparam = idparam
         self._sortby = web.input().get("sort", "time")
         self._count = self._obj.get_photo_count()
-        
+
     def can_be_chronological(self):
         return True
 
@@ -422,7 +422,7 @@ class ListPager(Pager):
 
     def get_photos(self):
         return self._obj.get_photos(self.get_offset())
-        
+
 class Configuration:
 
     def get_photo_uri(self):
@@ -436,9 +436,9 @@ class Configuration:
 
     def get_session_dir(self):
         return "/Users/larsga/cvs-co/semaphoto/src/sessions"
-    
+
 # --- UTILITIES
-    
+
 def current_user_name():
     if not hasattr(session, "username"):
         return None
@@ -449,7 +449,7 @@ def nocache():
     web.header("Pragma", "no-cache");
     web.header("Cache-Control", "no-cache, no-store, must-revalidate, post-check=0, pre-check=0");
     web.header("Expires", "Tue, 25 Dec 1973 13:02:00 GMT");
-    
+
 # --- CONSTANTS
 
 # typemap = {

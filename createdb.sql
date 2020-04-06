@@ -43,8 +43,8 @@ create table event (
   id varchar(20) primary key,
   name varchar(100) not null,
   description varchar(1000),
-  start_date date not null,
-  end_date date not null,
+  start_date varchar(10) not null,
+  end_date varchar(10) not null,
   hidden boolean not null
 );
 

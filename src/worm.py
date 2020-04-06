@@ -21,10 +21,10 @@ class DatabaseObject:
 
     def get_primary_key(self):
         return self.__dict__["_" + self.__idfield]
-    
+
     def get_primary_key_sql(self):
         return self._convert_to_sql(self.__idfield, self.get_primary_key())
- 
+
     def __getattr__(self, name):
         if name[ : 4] == "get_" and self.__dict__.has_key(name[3 : ]):
             if not self.__loaded and self.__dict__.get(name[3 : ]) == None:
@@ -133,7 +133,7 @@ class DatabaseObject:
         if filter:
             query += ' and ' + filter
         return query_for_value(query, (self.get_primary_key(), ))
-    
+
     def _load_one_to_many(self, klass, column, limit = None, filter = None,
                           offset = None, order = None):
         query = 'select * from %s t1 where %s = %%s' % (klass.TABLE, column)
@@ -153,7 +153,7 @@ class DatabaseObject:
         if filter:
             query += ' and ' + filter
         return query_for_value(query, (self.get_primary_key(), ))
-    
+
 class SetMethod:
 
     def __init__(self, object, attribute):
