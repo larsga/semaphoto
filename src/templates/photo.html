@@ -11,7 +11,7 @@ $if next:
     <a href="photo.jsp?id=$next.get_id()"><img src="static/nav_next.gif"></a>
 
 $ place = photo.get_taken_at()
-$ event = photo.get_taken_during()    
+$ event = photo.get_taken_during()
 $if place:
     <a href="place.jsp?id=$place.get_id()">$place.get_name()</a>
     $if event:
@@ -36,7 +36,7 @@ var average = $photo.get_score();
 var userscore = $photo.get_users_vote(username);
 var photoid = "$photo.get_id()";
 </script>
-  
+
 <span title="Average vote, out of $photo.get_vote_count() votes is
              $photo.get_score().">
   <img id=avgstar0 src="static/gray-star.png">
@@ -45,7 +45,7 @@ var photoid = "$photo.get_id()";
   <img id=avgstar3 src="static/gray-star.png">
   <img id=avgstar4 src="static/gray-star.png">
 </span>
-    
+
 &nbsp;&nbsp;&nbsp;
 <span title="Please record your vote. 1 star is bad, 3 is average, 5 is really good">
 <form method=post action="set-score" style="display: inline"
@@ -65,7 +65,11 @@ var photoid = "$photo.get_id()";
 </form>
 </span>
 
-<p><img src="$conf.get_photo_uri()$photo.get_id()"></p>
+$if username:
+    <p><a href="$conf.get_full_photo_uri(photo.get_id())"
+    ><img src="$conf.get_photo_uri()$photo.get_id()"></a></p>
+$else:
+    <p><img src="$conf.get_photo_uri()$photo.get_id()"></p>
 
 $if photo.get_description():
     <p>$photo.get_description()</p>
@@ -122,19 +126,19 @@ $else:
        (optional, not published)
     <tr><th width="20%">URL <td><input name=url size=60 value=""> (optional)
     <tr id=spam style="display: normal"
-       ><td><span title="As in, 'is this comment spam?'">Spam</span>    
+       ><td><span title="As in, 'is this comment spam?'">Spam</span>
     <td><input type=checkbox name=clever checked>
     <span class=hint><b>don't</b> check this if you want to be posted</span>
     <tr id=spam2 style="display: normal"
     ><td><span title="As in, 'please confirm that this is not comment
-    spam'">Not spam</span>    
+    spam'">Not spam</span>
     <td><input type=checkbox name=clever2>
     <span class=hint><b>do</b> check this if you want to be posted</span>
-          
+
 <tr><td colspan=2><a name="comment"></a>
-<textarea name=comment cols=60 rows=10 
+<textarea name=comment cols=60 rows=10
   ></textarea><br>
-<input type=submit value="Add"     name=add> 
+<input type=submit value="Add"     name=add>
 <input type=submit value="Preview" name=preview>
 <a href="markdown.jsp" target="blank">formatting help</a>
 </table>

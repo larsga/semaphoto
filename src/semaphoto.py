@@ -426,7 +426,10 @@ class ListPager(Pager):
 class Configuration:
 
     def get_photo_uri(self):
-        return 'http://larsga.webfactional.com/photoserv.py?'
+        return 'https://img.garshol.priv.no/photoserv.py?'
+
+    def get_full_photo_uri(self, id):
+        return 'https://img.garshol.priv.no/photoserv.py?%s;full' % id
 
     def get_gmaps_key(self):
         return 'ABQIAAAA8oFUEfcfBwJ3xTqFdvtQYBT4pz8oWygjc4zMKW0Sgg0jlcfanRRyg1iSx13Hptl3x9lAlGQvZxKDXw'
