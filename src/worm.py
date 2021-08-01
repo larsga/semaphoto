@@ -51,7 +51,7 @@ class DatabaseObject:
         self.__loaded = True
 
     def _populate_from_row(self, row):
-        for ix in range(len(row)):
+        for ix in range(len(row or [])):
             colname = cursor.description[ix][0]
             if self.__typemap.has_key(colname):
                 klass = self.__typemap[colname]
